@@ -1,0 +1,12 @@
+[package]
+name = "brickrust_macros"
+edition = "2021"
+
+[lib]
+name = "brickrust_macros"
+proc-macro=true
+
+[dependencies]
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"

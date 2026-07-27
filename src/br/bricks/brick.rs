@@ -1,0 +1,106 @@
+
+use crate::ue::coreuobject::*;
+use crate::ue::uclass::*;
+use crate::br::properties::interface::IBrickPropertyInterface;
+use crate::uclass_game;
+
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct UBrickVTable
+{
+    pub object: UObjectBaseVTable,
+    pub GetNetPushIdDynamic: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub PostLoadBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub PostInitializeBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub UninitializeBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBrickEditorObjectDisplayName: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetEditorInterface: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnViewMoveChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnEditorMoveChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub CreateEditorParams: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub SetupBrickEditorObjectDefaults: unsafe extern "C" fn( brick: *mut UBrick, params: *const () ),
+    pub RecycleBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub SetupCreateRootComponentParams: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBrickEditorObjectLocalBounds: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnMirrorBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub CalcBrickEditorObjectMass: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBrickEditorObjectSize: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub CalcBrickEditorObjectPrice: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ShouldBeHiddenByViewMode: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub UpdateEditorVisualization: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub IsBrickPropertyMirroredFrom: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnEditorMoveCommitted: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnEditorMoveCancelled: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnEditorMoveUpdate: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ResolveDeprecatedBrickProperty: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ResolveRemovedBrickProperty: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ShouldTick_Implementation: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetStaticMesh: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBodySetup: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub CalcStaticMeshBounds: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub SetupVehicleInventory: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub PostConstructVehicle: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnCVarChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ShouldReplicate: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub SetupCreateMeshComponentParams: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub SetupCreateStaticMeshComponentParams: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetRenderScale3D: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBodySetupScale3D: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ShouldSpawnCollisionEffects: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub SpawnCollisionEffects: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnCalculateMassProperties: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub CalcMassPropertiesFromShapes: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetVolumeScale: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBrickEditorVolumeScale: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ShouldShowGenerateLiftProperty: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetFluidDynamicElements: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetFluidDynamicSurface: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub TickBrick: unsafe extern "C" fn( brick: *mut UBrick, delta: f32 ),
+    pub ShouldBrickTick: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBrickConnectors: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetFocusedConnectorAxisFlags: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetConnectorRelativeTransform: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub CreateCustomBrickConnection: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnBrickConnectionActivated: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnBrickConnectionBroke: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnUpdatePartRoot: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnBrickPartRootChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnBricksAddedOrRemovedFromCluster: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetEditorBrickMaterial: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub UpdateBrickMaterial: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetNumMaterialSlots: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetBrickPhysMaterial: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub CanBePickedUp: unsafe extern "C" fn( brick: *mut UBrick ) -> u8,
+    pub IsRCBrick: unsafe extern "C" fn( brick: *mut UBrick ) -> bool,
+    pub OnIsControllableChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    /* figure the inputs out, they seem to be broken */
+    /* prob need to wait for 1.11 BRMK */
+    pub HasAnyInputChannel: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetInputChannels: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub MarkBrickBurnt: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnBrickDamageStateChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnIsFireChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub PreRepairBrick: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub RepairBrick: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnContactModify: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub PostContactModify: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub ReceiveDamageInternal: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetFuelTankRuntimeParams: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetFuelCapacity: unsafe extern "C" fn( brick: *mut UBrick ) -> f32,
+    pub GetFuelType: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub OnHasAnyFuelChanged: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub IsBrickPatternSupported: unsafe extern "C" fn( brick: *mut UBrick, mat: *mut () ) -> u8,
+    pub IsBrickMaterialSupported: unsafe extern "C" fn( brick: *mut UBrick, mat: *mut () ) -> u8,
+    pub _a_75: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub _a_76: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub _a_77: unsafe extern "C" fn( brick: *mut UBrick ),
+}
+
+pub struct UBrick
+{
+    pub uobject: UObject,
+    pub property_interface: IBrickPropertyInterface,
+}
+
+uclass_game!(UBrick, BrickRigs);

@@ -1,0 +1,5 @@
+**/target
+**/.fpc
+**/.cache
+deps/minhook/minhook/build
+loaders/ue4ss/build

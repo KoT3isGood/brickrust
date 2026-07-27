@@ -1,0 +1,33 @@
+[package]
+name = "brickrust"
+edition = "2021"
+
+[profile.dev]
+panic = "abort"
+[profile.release]
+panic = "abort"
+
+[lib]
+name = "brickrust"
+crate-type = ["rlib"]
+
+[[example]]
+name = "basic_init"
+crate-type = ["staticlib"]
+
+[[example]]
+name = "custom_brick_properties"
+crate-type = ["staticlib"]
+
+[features]
+default=["brick_rigs_bricks_1_11_0"]
+brick_rigs_bricks_1_11_0=[]
+brick_rigs_1_11_0=["brick_rigs_bricks_1_11_0"]
+
+[workspace]
+members = [
+    "macros"
+]
+
+[dependencies]
+brickrust_macros = { path = "macros" }
