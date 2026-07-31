@@ -38,13 +38,20 @@ impl<T: Clone> TArray<T>
         if self.num >= self.max
         {
             self.max = u32::next_power_of_two((self.max + 1) as u32) as i32;
-            self.data = fmalloc::realloc(self.data as *mut (), self.max as usize, 0) as *mut T;
+            self.data = 
+                fmalloc::realloc(
+                    self.data as *mut (), 
+                    self.max as usize * core::mem::size_of::<T>(),
+                    core::mem::align_of::<T>() as u32) as *mut T
         }
         *self.data.add( self.num as usize ) = data.clone();
         self.num += 1;
         self.num - 1
-
-
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn Add( &mut self, data: T ) -> i32 
+    {
+        self.push(data)
     }
 
     pub unsafe fn free( &mut self )

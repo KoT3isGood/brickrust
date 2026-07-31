@@ -1,4 +1,3 @@
-use super::modinfo::ModInfo;
 
 #[macro_export]
 macro_rules! container_of {

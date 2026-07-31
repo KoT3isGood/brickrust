@@ -1,6 +1,0 @@
-[x86_64-pc-windows-msvc]
-is_clang_cl = true
-cl = "clang-cl" 
-is_lld_link = true
-link = "lld-link"
-xwin = "/home/kotofyt/.xwin"

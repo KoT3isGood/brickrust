@@ -1,8 +1,8 @@
 #![allow(nonstandard_style)]
-pub use super::fproperty::*;
-pub use super::tarray::*;
-pub use super::ffield::*;
-pub use super::coreuobject::*;
+use super::fproperty::*;
+use super::tarray::*;
+use super::ffield::*;
+use super::coreuobject::*;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -69,13 +69,15 @@ impl UStruct
 
 unsafe extern "C"
 {
-    pub fn BrickRust_GetUStructFromName( child: *const u8, parent: *const u8) -> *const UStruct;
+    //pub fn BrickRust_GetUStructFromName( child: *const u8, parent: *const u8) -> *const UStruct;
 }
 
+/*
 #[macro_export]
 macro_rules! uclass_game {
     ($a:ty, $module:expr) => {
-        use $crate::ue::uclass::{UStruct, StaticClass, BrickRust_GetUStructFromName};
+        use $crate::ue::uclass::{UStruct, BrickRust_GetUStructFromName};
+        use $crate::ue::coreuobject::{StaticClass};
         impl $a {
             pub unsafe fn IsA<T: StaticClass>(&self) -> bool
             {
@@ -100,3 +102,4 @@ macro_rules! uclass_game {
         }
     };
 }
+*/

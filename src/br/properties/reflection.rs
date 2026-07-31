@@ -11,7 +11,6 @@ use crate::br::properties::editinfo::FBrickPropertyEditInfo;
 pub struct FBrickPropertyReflectionFilter
 {
     pub tags: FGameplayTagContainer,
-
 }
 
 #[repr(C)]
