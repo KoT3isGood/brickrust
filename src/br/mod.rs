@@ -3,3 +3,4 @@
 pub mod brickeditor;
 pub mod bricks;
 pub mod properties;
+pub mod game;

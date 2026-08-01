@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 libloading = "0.9"
+brickrust_macros = { path = "../macros" }
 
 [lib]
 crate-type = ["cdylib", "rlib"]

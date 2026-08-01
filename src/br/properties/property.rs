@@ -11,6 +11,7 @@ use crate::ue::toptional::TOptional;
 pub use crate::br::brickeditor::saveversion::*;
 use core::mem::zeroed;
 use brickworks::br_print;
+use crate::BrickRust_print;
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct TBrickPropAttribute<T>

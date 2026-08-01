@@ -3,6 +3,7 @@ use crate::ue::fmath::FVector;
 use crate::ue::fname::{BrickRust_string_to_fname, FName};
 use crate::ue::ftext::BrickRust_string_to_ftext;
 use brickworks::br_print;
+use crate::BrickRust_print;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]

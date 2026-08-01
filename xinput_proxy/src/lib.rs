@@ -1,4 +1,3 @@
-#![no_std]
 #![allow(nonstandard_style)]
 
 //!
@@ -92,11 +91,3 @@ xinput_proxy!(XInputGetDSoundAudioDeviceGuids, XInputGetDSoundAudioDeviceGuidsFn
 xinput_proxy!(XInputGetKeystroke, XInputGetKeystrokeFn);
 xinput_proxy!(XInputGetState, XInputGetStateFn);
 xinput_proxy!(XInputSetState, XInputSetStateFn);
-#[no_mangle]
-extern "C" fn rust_eh_personality() {}
-
-#[panic_handler]
-fn panic(_: &PanicInfo) -> !
-{
-    loop {};
-}

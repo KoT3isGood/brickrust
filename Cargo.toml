@@ -23,6 +23,7 @@ bitflags= "2.13.1"
 brickrust_macros = { path = "macros" }
 brickworks = { path = "brickworks" }
 xinput1_3 = { path = "xinput_proxy" }
+min_hook_rs = "2.2.1"
 
 [profile.dev]
 panic = "abort"

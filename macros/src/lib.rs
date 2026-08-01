@@ -1,10 +1,10 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, LitStr};
+use quote::{quote, format_ident};
+use syn::{parse_macro_input, LitStr, ItemFn, Token };
+use syn::parse::{Parse, ParseStream};
 
-#[proc_macro]
-pub fn sig(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as LitStr);
+fn signature(input: LitStr) -> (Vec<u8>, Vec<bool>)
+{
     let pattern = input.value();
 
     let mut bytes = Vec::new();
@@ -22,15 +22,58 @@ pub fn sig(input: TokenStream) -> TokenStream {
             mask.push(true);
         }
     }
+    (bytes, mask)
+}
 
-    let byte_tokens = bytes.iter();
-    let mask_tokens = mask.iter();
+#[proc_macro]
+pub fn sig(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let (bytes, mask) = signature(input);
+    let bytes = bytes.iter();
+    let mask = mask.iter();
 
     quote! {
         Signature {
-            bytes: &[#(#byte_tokens),*],
-            mask: &[#(#mask_tokens),*],
+            bytes: &[#(#bytes),*],
+            mask: &[#(#mask),*],
         }
     }
     .into()
+}
+
+struct MacroInput {
+    message: LitStr,
+    _comma: Token![,],
+    func: ItemFn,
+}
+
+impl Parse for MacroInput {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(MacroInput {
+            message: input.parse()?,
+            _comma: input.parse()?,
+            func: input.parse()?,
+        })
+    }
+}
+
+#[proc_macro]
+pub fn lookup(input: TokenStream) -> TokenStream {
+    let MacroInput { message, func, .. } = parse_macro_input!(input as MacroInput);
+
+    let sig = &func.sig;
+    let name = &sig.ident;
+
+    // Extract inputs and output
+    let inputs = &sig.inputs;
+    let output = &sig.output;
+
+    quote! {
+        #[unsafe(naked)]
+        pub unsafe extern "C" fn #name(#inputs) #output {
+            core::arch::naked_asm!(
+                "ret"
+            );
+        }
+    }.into()
 }

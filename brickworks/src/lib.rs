@@ -42,7 +42,7 @@ unsafe extern "C" fn brickworks_init() {
     for m in MODS.as_mut().unwrap().iter()
     {
         use modinfo::ModInfo;
-        let f_ = m.1.get(b"mod_info");
+        let f_ = m.1.get(b"mod_info\0");
         let f: Symbol<extern "C" fn () -> ModInfo> = f_.unwrap();
         let modinfo = f();
 
@@ -59,11 +59,10 @@ unsafe extern "C" fn brickworks_init() {
         br_print!("   Author: {}", author.to_str().unwrap() );
 
         /* because pointers are per-dll we need to init them */
-        let f_ = m.1.get(b"brickrust_init");
+        let f_ = m.1.get(b"mod_init\0");
         let f: Symbol<extern "C" fn ()> = f_.unwrap();
         f();
     }
-    br_print!("Hi, this is brickworks. If you see this message the init has been successful");
 }
 
 #[no_mangle]

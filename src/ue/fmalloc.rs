@@ -1,12 +1,13 @@
 
 
 pub const DEFAULT_ALIGNMENT: u32 = 0u32;
+use brickrust_macros::lookup;
 
 pub fn malloc( count: usize, alignment: u32 ) -> *mut ()
 {
     panic!("malloc");
-
 }
+
 pub fn realloc( original: *mut(), count: usize, alignment: u32 ) -> *mut ()
 {
     panic!("realloc");

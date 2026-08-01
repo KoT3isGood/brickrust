@@ -1,9 +1,33 @@
 #![allow(nonstandard_style)]
-use core::ops::Deref;
 
 use super::fname::*;
 use super::uclass::*;
 
+pub static mut GOBJECTS_PTR: *const *mut () = core::ptr::null();
+pub static mut StaticConstructObject_Internal: usize = 0;
+pub type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters) -> *mut UObjectBase;
+
+pub unsafe fn GObject() -> *mut ()
+{
+    return *GOBJECTS_PTR;
+
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct FStaticConstructObjectParameters
+{
+    pub class: *const UClass,
+    pub outer: *const UObjectBase,
+    pub name: FName,
+    pub set_flags: u32,
+    pub internal_flags: u32,
+    pub copy_transients: bool,
+    pub archetype: bool,
+    pub template: *const UObjectBase,
+    pub instance_graph: *const (),
+    pub external_package: *const (),
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

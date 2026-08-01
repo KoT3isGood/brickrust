@@ -105,7 +105,6 @@ macro_rules! br_print {
     ($($arg:tt)*) => {{
         use core::fmt::Write;
         use $crate::print::Buffer;
-        use $crate::print::BrickRust_print;
 
         let mut buf = Buffer::new();
         let _ = write!(&mut buf, "{}\0", core::format_args!($($arg)*));
