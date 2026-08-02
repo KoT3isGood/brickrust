@@ -3,9 +3,9 @@
 use super::fname::*;
 use super::uclass::*;
 
-pub static mut GOBJECTS_PTR: *const *mut () = core::ptr::null();
-pub static mut StaticConstructObject_Internal: usize = 0;
-pub type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters) -> *mut UObjectBase;
+pub(crate) static mut GOBJECTS_PTR: *const *mut () = core::ptr::null();
+pub(crate) static mut StaticConstructObject_Internal: Option<StaticConstructObject_t> = None;
+pub(crate) type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters) -> *mut UObjectBase;
 
 pub unsafe fn GObject() -> *mut ()
 {

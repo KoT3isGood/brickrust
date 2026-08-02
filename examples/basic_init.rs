@@ -1,5 +1,7 @@
 use brickworks::modinfo::ModInfo;
 use brickworks::{br_print, set_module_name};
+use brickrust::ue::coreuobject::*;
+use brickrust::ue::fname;
 set_module_name!("basic init");
 
 #[no_mangle]
@@ -17,18 +19,23 @@ extern "C" fn mod_info() -> ModInfo
 /**
  * this function is called during the initialization stage of brickworks
  * 
- * call `brickrust::init` and `brickrust::hook_ue_init`
+ * call `brickrust::init` to allow usage of brickrust
  * */
+
+static mut INITED: bool = false;
+
 #[no_mangle]
 pub unsafe extern "C" fn mod_init()
 {
+    if INITED { return; }
     brickrust::init();
-    brickrust::hook_ue_init(ue_init);
-    br_print!("mod_init");
+    brickrust::hook_construct_uobject(ue_object_init);
+    INITED = false;
 }
 
-pub unsafe fn ue_init()
+pub unsafe fn ue_object_init( obj: *mut UObjectBase )
 {
+    br_print!("{:#?}", (*obj).name_private)
 }
 
 pub fn frame()

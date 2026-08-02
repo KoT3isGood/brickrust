@@ -2,10 +2,10 @@
 
 help:
 	@echo "run"
-	@echo "\tmake install DIR=\"/path/to/common/Brick Rigs\""
+	@echo "    make install DIR=\"/path/to/common/Brick Rigs\""
 	@echo ""
 	@echo "for example \"$(HOME)/.steam/steam/steamapps/common/Brick Rigs\""
-	@echo "dev=true\tenables development builds"
+	@echo "dev=true    enables development builds"
 
 TARGET_RELEASE=target/x86_64-pc-windows-gnu/release
 TARGET_DEV=target/x86_64-pc-windows-gnu/debug
@@ -16,12 +16,17 @@ else
 TARGET=$(TARGET_RELEASE)
 endif
 
+CARGO_TARGET = --target x86_64-pc-windows-gnu
+
+doc:
+	cargo doc $(CARGO_TARGET)
+
 ifeq ($(dev),true)
 build:
-	cargo build --target x86_64-pc-windows-gnu --examples || true
+	cargo build $(CARGO_TARGET) --examples || true
 else
 build:
-	cargo build -r --target x86_64-pc-windows-gnu --examples || true
+	cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu --examples || true
 endif
 
 ifdef DIR

@@ -52,10 +52,10 @@ unsafe extern "system" fn DllMain(
             brickworks_init();
         }
         DLL_PROCESS_DETACH => {
+            brickworks_deinit();
         }
         _ =>
         {
-            brickworks_deinit();
 
         }
         

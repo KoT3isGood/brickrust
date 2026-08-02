@@ -9,15 +9,19 @@ unsafe extern "C"
 
 static mut LOGGER: *mut () = core::ptr::null_mut();
 
-pub unsafe fn init()
+pub(crate) unsafe fn init()
 {
     LOGGER = fopen(b"brickworks.txt\0".as_ptr(), b"w\0".as_ptr());
 }
 
-pub unsafe fn deinit()
+pub(crate) unsafe fn deinit()
 {
     fclose(LOGGER);
 }
+
+/**
+ * Puts a message into a logger.
+ * */
 #[no_mangle]
 pub unsafe fn brickworks_puts( modname: *const u8, value: *const u8 )
 {

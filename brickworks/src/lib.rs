@@ -1,16 +1,39 @@
-#![allow(static_mut_refs)]
+//!
+//! This crate is a basic mod loader for Brick Rigs, made to load dynamic libraries.
+//! Provides basic logging and signature finding for Rust frontends?.
+//!
+//! # Folder structure
 //! 
-//! brickworks is a mod manager for all brickrust mods
+//! ```txt
+//! BrickRigs.exe
+//! BrickRigs/
+//!     Binaries/
+//!         Win64/
+//!              BrickRigsSteam-Win64-Shipping.exe
+//!              brickworks.dll
+//!              xinput1_3.dll
+//! brickworks/
+//!     yourmod.dll      # enabled mod
+//!     _yourmod2.dll    # disabled mod
+//! brickworks.txt
+//! libgcc_s_seh-1.dll      # shared dependencies
+//! libwinpthread-1.dll
+//! ```
 //!
-//! it is a mod manager which loads all the mods you need
+//! # Functions provided to a mod
 //!
-//! we do not use no_std as it is kinda high-level thing
+//! Required functions for a mod:
+//! - `mod_info` -- returns mod metadata
+//! - `mod_init` -- initializes mod
 //!
+
+#![allow(static_mut_refs)]
 pub mod win32;
 pub mod logger;
 pub mod print;
 pub mod modinfo;
 pub mod patterns;
+pub mod hookmgr;
 
 use libloading::*;
 use std::fs;
@@ -25,9 +48,9 @@ static mut MODS: Option<HashMap<OsString, Library>> = None;
 
 
 /**
- * must be called by the loader when it is loaded
- * DllMain for windows
- * .init_array for linux
+ * Scans for mods and initializes them.
+ * 
+ * Note: This function must be run before the engine initializes.
  * */
 #[no_mangle]
 unsafe extern "C" fn brickworks_init() {
@@ -59,9 +82,10 @@ unsafe extern "C" fn brickworks_init() {
         br_print!("   Author: {}", author.to_str().unwrap() );
 
         /* because pointers are per-dll we need to init them */
-        let f_ = m.1.get(b"mod_init\0");
-        let f: Symbol<extern "C" fn ()> = f_.unwrap();
-        f();
+        let mod_init_ = m.1.get(b"mod_init\0");
+        let mod_init: Symbol<extern "C" fn ()> = mod_init_.unwrap();
+        mod_init();
+        br_print!("Mod initialized: {}", name.to_str().unwrap() );
     }
 }
 

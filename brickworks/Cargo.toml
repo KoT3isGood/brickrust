@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 libloading = "0.9"
 brickrust_macros = { path = "../macros" }
+min_hook_rs = "2.2.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

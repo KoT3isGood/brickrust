@@ -24,6 +24,7 @@ brickrust_macros = { path = "macros" }
 brickworks = { path = "brickworks" }
 xinput1_3 = { path = "xinput_proxy" }
 min_hook_rs = "2.2.1"
+iced-x86 = "1.21.0"
 
 [profile.dev]
 panic = "abort"

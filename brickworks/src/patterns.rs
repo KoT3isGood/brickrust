@@ -14,8 +14,7 @@ pub struct ExternalFunction
 }
 
 /**
- * find a function by it's signature
- * not really useful for vtables
+ * Searches array of bytes for specific signature
  * */
 pub unsafe fn lookup_data( data: *const u8, data_len: usize, sign: Signature ) -> *const u8
 {
@@ -43,6 +42,9 @@ pub unsafe fn lookup_data( data: *const u8, data_len: usize, sign: Signature ) -
     return core::ptr::null();
 }
 
+/**
+ * Searches game for specifc signature
+ * */
 pub unsafe fn lookup( sign: Signature ) -> *const u8
 {
     let data_len: usize = get_base_size();
