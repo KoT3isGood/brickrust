@@ -1,15 +1,17 @@
 #![allow(nonstandard_style)]
 
+use brickworks::br_print;
+
 use super::fname::*;
 use super::uclass::*;
 
-pub(crate) static mut GOBJECTS_PTR: *const *mut () = core::ptr::null();
+pub(crate) static mut GOBJECTS_PTR: *mut () = core::ptr::null_mut();
 pub(crate) static mut StaticConstructObject_Internal: Option<StaticConstructObject_t> = None;
 pub(crate) type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters) -> *mut UObjectBase;
 
 pub unsafe fn GObject() -> *mut ()
 {
-    return *GOBJECTS_PTR;
+    return GOBJECTS_PTR;
 
 }
 
@@ -162,8 +164,23 @@ pub trait StaticClass {
 }
 impl UObject
 {
-    pub unsafe fn IsA<T: StaticClass>(&self) -> bool
+    pub unsafe fn IsA(&self, s: &'static str) -> bool
     {
-        (*self.class_private).ustruct.IsChildOf(T::StaticClass() as *mut UStruct)
+        let trimmed = &s[1..];
+        let fname = FName::search_str(trimmed);
+        let mut cls = self.class_private;
+        loop 
+        {
+            if (
+                (*cls).ustruct.ufield.uobject.name_private.comparison_index == fname.comparison_index
+            )
+            {
+                return true;
+            }
+
+            cls = (*cls).ustruct.super_struct as *const UClass;
+            if cls.is_null() { break; }
+        }
+        false
     }
 }

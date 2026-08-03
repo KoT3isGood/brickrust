@@ -55,6 +55,7 @@ static mut MODS: Option<HashMap<OsString, Library>> = None;
 #[no_mangle]
 unsafe extern "C" fn brickworks_init() {
     logger::init();
+    hookmgr::init();
     MODS = Some(HashMap::new());
 
     load_mods();

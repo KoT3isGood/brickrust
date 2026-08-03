@@ -1,10 +1,1 @@
-#[repr(C)]
-pub struct BrickGameInstance
-{
-
-}
-
-impl BrickGameInstance
-{
-
-}
+pub mod instance;

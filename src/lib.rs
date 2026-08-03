@@ -18,7 +18,6 @@
 //!
 //!
 
-#[no_std]
 set_module_name!(b"brickrust");
 
 pub mod br;
@@ -31,21 +30,13 @@ use core::ffi::CStr;
 
 use brickworks::br_print;
 use brickworks::set_module_name;
-use brickworks::patterns::*;
-use brickrust_macros::sig;
+use brickworks::hookmgr;
 
-use min_hook_rs::enable_hook;
-use ue::coreuobject::GOBJECTS_PTR;
-use ue::coreuobject::StaticConstructObject_Internal;
-use ue::coreuobject::StaticConstructObject_t;
-use ue::coreuobject::FStaticConstructObjectParameters;
-use ue::uworld::GWORLD_PTR;
-use std::string::String;
 use core::mem::transmute;
-
-use crate::ue::coreuobject::UObjectBase;
-use crate::ue::fname::*;
-use crate::ue::tarray::FString;
+use ue::fname::*;
+use ue::coreuobject::*;
+use ue::tarray::FString;
+use ue::uclass::*;
 use iced_x86::{Decoder, DecoderOptions, Formatter, Instruction, NasmFormatter};
 
 pub(crate) unsafe fn disassemble( data: *const u8 )
@@ -72,30 +63,21 @@ pub(crate) unsafe fn disassemble( data: *const u8 )
 
 unsafe fn init_signatures()
 {
-    /* from https://github.com/RussellJerome/UnrealModLoader/blob/main/UnrealEngineModLoader/UnrealEngineModLoader/GameInfo/GameInfo.cpp */
-    let sig = lookup(sig!("8B 46 10 3B 46 3C 75 0F 48 8B D6 48 8D 0D ? ? ? ? E8"));
-    GOBJECTS_PTR = sig.add(18).add(*(sig.add(14) as *mut u32) as usize) as *const *mut ();
-
-    let sig = lookup(sig!("0F 2E ? 74 ? 48 8B 1D ? ? ? ? 48 85 DB 74"));
-    GWORLD_PTR = sig.add(12).add(*(sig.add(8) as *mut u32) as usize) as *const *mut ();
-
-    /*
-     * each StaticConstructObject_Internal tests for flags
-     * we can find these flags
-     * */
-    let sig = lookup(sig!("F7 86 CC 00 00 00 80 00 00 10")).sub(0x51);
-    StaticConstructObject_Internal = Some(transmute(sig));
-
-    let sig = lookup(sig!("74 09 48 8D 15 ? ? ? ? EB 16"));
-    GNAMES_PTR = sig.add(9).add(*(sig.add(5) as *mut u32) as usize) as *mut FNamePool;
-    
+    ue::init_signatures();
+    br::init_signatures();
 }
 
 unsafe extern "C" fn static_construct( params: FStaticConstructObjectParameters) -> *mut UObjectBase
 {
     let uobject = (StaticConstructObject_Internal_hook.unwrap())(params);
-    let s = CStr::from_ptr((*uobject).name_private.as_cstr() as *const i8);
-    br_print!("{:#?}", s);
+    let (subhooks, count) = hookmgr::get_subhooks(
+        transmute(StaticConstructObject_Internal.unwrap())
+    );
+    let subhooks: *const unsafe fn( obj: *mut UObjectBase ) = transmute(subhooks);
+    for i in 0..count
+    {
+        (*subhooks.add(i))(uobject);
+    }
     return uobject;
 }
 
@@ -111,29 +93,44 @@ static mut CTX: UnrealModContext = UnrealModContext {
     construct_object: None,
 };
 
+static mut INITED: bool = false;
+
+use std::backtrace::Backtrace;
+use std::panic;
+
+/**
+ * BUG: This is ran twice. Why?
+ * */
 #[no_mangle]
 pub unsafe fn init()
 {
+    panic::set_hook(Box::new(|info| {
+        let bt = Backtrace::force_capture();
+        br_print!("Panic: {}", info);
+        br_print!("Backtrace:\n{}", bt);
+    }));
+
+    if (INITED) { return; }
     init_signatures();
 
+    br_print!("{:#?}", StaticConstructObject_Internal_hook);
+    StaticConstructObject_Internal_hook = Some(
+        transmute(
+            hookmgr::hook(
+                StaticConstructObject_Internal.unwrap() as *const (), 
+                static_construct as *const ()
+            )
+        )
+    );
     /*
      * todo: make it brickworks thing
      * */
-    min_hook_rs::initialize();
-    if let Ok(hook) = min_hook_rs::create_hook(
-        StaticConstructObject_Internal.unwrap() as *mut c_void, 
-        static_construct as *mut c_void
-        )
-    {
-        StaticConstructObject_Internal_hook = Some(core::mem::transmute(hook));
-    }
-
-    let r = enable_hook(StaticConstructObject_Internal.unwrap() as *mut c_void);
-    br_print!("{:#?}", r);
+    br_print!("{:#?}", StaticConstructObject_Internal_hook);
     br_print!("initialized brickrust");
+    INITED = true;
 }
 
 pub unsafe fn hook_construct_uobject( f: unsafe fn( obj: *mut UObjectBase ) )
 {
-
+    hookmgr::add_subhook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
 }

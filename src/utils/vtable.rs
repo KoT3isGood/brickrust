@@ -1,7 +1,6 @@
 
 use crate::ue::fmalloc;
 use core::ptr;
-
 ///
 /// estimates the size of vtable by finding null function, may not give actual size
 /// kinda bad
@@ -19,7 +18,7 @@ pub unsafe fn vtable_estimate_size( vtable: *mut usize ) -> usize
 
 pub unsafe fn allocate_vtable( count: usize ) -> *mut usize
 {
-    fmalloc::malloc(count * size_of::<usize>(), size_of::<usize>() as u32) as *mut usize
+    fmalloc::malloc(count * size_of::<usize>() ) as *mut usize
 }
 
 
@@ -29,7 +28,7 @@ pub unsafe fn allocate_vtable( count: usize ) -> *mut usize
 pub unsafe fn copy_vtable( vtable: *mut usize, count: usize ) -> *mut usize
 {
     let new: *mut usize = allocate_vtable(count);
-    ptr::copy_nonoverlapping(vtable, new, count);
+    ptr::copy(vtable, new, count);
     return new;
 }
 
@@ -83,7 +82,7 @@ pub unsafe fn vtable_add_custom_tables
     }
 
     let new: *mut usize = fmalloc::malloc
-        (vcount * size_of::<usize>(), size_of::<usize>() as u32) as *mut usize;
+        (vcount * size_of::<usize>()) as *mut usize;
     ptr::copy_nonoverlapping(vtable, new, count);
 
     let mut index = count;

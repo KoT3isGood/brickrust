@@ -40,8 +40,8 @@ impl<T> TSharedRef<T>
     pub unsafe fn make_shared() -> TSharedRef<T>
     {
         TSharedRef {
-            object: fmalloc::malloc(size_of::<T>(), 0) as *mut T,
-            reference_controller: fmalloc::malloc(size_of::<FReferenceControllerBase>(), 0) as *mut FReferenceControllerBase,
+            object: fmalloc::malloc(size_of::<T>()) as *mut T,
+            reference_controller: fmalloc::malloc(size_of::<FReferenceControllerBase>()) as *mut FReferenceControllerBase,
         }
     }
 
@@ -49,7 +49,7 @@ impl<T> TSharedRef<T>
     {
         TSharedRef {
             object: core::ptr::null_mut(),
-            reference_controller: fmalloc::malloc(size_of::<FReferenceControllerBase>(), 0) as *mut FReferenceControllerBase,
+            reference_controller: fmalloc::malloc(size_of::<FReferenceControllerBase>()) as *mut FReferenceControllerBase,
         }
     }
 }

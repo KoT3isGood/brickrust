@@ -1,6 +1,11 @@
+use brickworks::br_print;
+
 use super::fmalloc;
 use core::fmt;
 use core::fmt::*;
+use super::FName;
+use brickworks::set_module_name;
+set_module_name!("tarray");
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -18,11 +23,11 @@ impl<T: Clone> TArray<T>
     }
     pub unsafe fn with_size( num: i32 ) -> TArray<T>
     {
-        TArray { data: fmalloc::malloc( size_of::<T>() * num as usize, 0 ) as *mut T, num: num, max: num}
+        TArray { data: fmalloc::malloc( size_of::<T>() * num as usize ) as *mut T, num: num, max: num}
     }
     pub unsafe fn init( data: T, num: i32) -> TArray<T>
     {
-        let alloc = fmalloc::malloc( size_of::<T>() * num as usize, 0 ) as *mut T;
+        let alloc = fmalloc::malloc( size_of::<T>() * num as usize ) as *mut T;
         for i in 0..num
         {
             *alloc.add(i as usize) = data.clone();
@@ -41,8 +46,8 @@ impl<T: Clone> TArray<T>
             self.data = 
                 fmalloc::realloc(
                     self.data as *mut (), 
-                    self.max as usize * core::mem::size_of::<T>(),
-                    core::mem::align_of::<T>() as u32) as *mut T
+                    self.max as usize * core::mem::size_of::<T>()
+                ) as *mut T
         }
         *self.data.add( self.num as usize ) = data.clone();
         self.num += 1;
@@ -103,6 +108,18 @@ impl FString
         {
             let mut wc: u16 = 0u16;
             mbtowc(&mut wc, s.as_ptr().add(i), 1);
+            *fs.data.data.add(i) = wc;
+        }
+        fs
+    }
+    pub unsafe fn from_fname( s: FName ) -> FString
+    {
+        let (ptr, l) = s.as_sptr();
+        let fs = FString { data: TArray::<u16>::init( 0, l as i32 ) };
+        for i in 0..l as usize
+        {
+            let mut wc: u16 = 0u16;
+            mbtowc(&mut wc, ptr.add(i), 1);
             *fs.data.data.add(i) = wc;
         }
         fs
