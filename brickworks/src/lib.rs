@@ -92,6 +92,7 @@ unsafe extern "C" fn brickworks_init() {
 
 #[no_mangle]
 unsafe extern "C" fn brickworks_deinit() {
+    MODS = None;
     logger::deinit();
 }
 #[no_mangle]

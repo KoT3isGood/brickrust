@@ -114,6 +114,8 @@ impl FNumericBrickPropertyBase
     }
 }
 
+#[allow(non_upper_case_globals)]
+pub static mut FNumericBrickPropertyBase_ptr: *const FNumericBrickPropertyBaseVTable = core::ptr::null();
 
 impl FNumericBrickPropertyBaseVTable
 {

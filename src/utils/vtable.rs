@@ -40,7 +40,7 @@ pub unsafe fn copy_vtable2<T>( vtable: *const T ) -> *mut T
 pub unsafe fn copy_vtable_with_parent( vtable: *mut usize, count: usize ) -> *mut usize
 {
     let new: *mut usize = allocate_vtable(count+1);
-    ptr::copy_nonoverlapping(vtable, new.add(1), count);
+    ptr::copy(vtable, new.add(1), count);
     *(new as *mut *mut usize) = vtable;
     return new.add(1);
 }
@@ -83,7 +83,7 @@ pub unsafe fn vtable_add_custom_tables
 
     let new: *mut usize = fmalloc::malloc
         (vcount * size_of::<usize>()) as *mut usize;
-    ptr::copy_nonoverlapping(vtable, new, count);
+    ptr::copy(vtable, new, count);
 
     let mut index = count;
     let mut indexes = [0usize; N];
@@ -113,5 +113,4 @@ pub unsafe fn class_get_parent_vtable( class: *mut *mut *mut () ) -> *mut usize
 {
     *(*class).sub(1) as *mut usize
 }
-
 

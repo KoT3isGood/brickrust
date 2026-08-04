@@ -1,6 +1,6 @@
 
 use crate::ue::tarray::TArray;
-use crate::ue::tshared::TWeakPtr;
+use crate::ue::tshared::*;
 use crate::ue::ftext::FText;
 use crate::br::properties::property::FBrickPropertyInstance;
 
@@ -14,7 +14,7 @@ pub struct FBrickPropertyEditInfo
     pub idk6: *mut (),
     pub idk7: *mut (),
     pub description: FText,
-    pub container_objects: TArray<()>,
+    pub idk9: TSharedPtr<()>,
     pub idk10: *mut (),
     pub is_enabled: bool,
     pub is_read_only: bool,

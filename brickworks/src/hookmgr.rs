@@ -42,7 +42,7 @@ pub unsafe fn hook( f: *const (), new_fn: *const() ) -> *const ()
         subhooks: Vec::new(),
     };
 
-    let r = min_hook_rs::create_hook( f as *mut c_void, new_fn as *mut c_void );
+    let r = create_hook( f as *mut c_void, new_fn as *mut c_void );
     if r.is_err() { return core::ptr::null(); }
     h.f = core::mem::transmute(r.unwrap());
 

@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use quote::{quote, format_ident};
+use quote::quote;
 use syn::{parse_macro_input, LitStr, ItemFn, Token };
 use syn::parse::{Parse, ParseStream};
 
@@ -59,7 +59,7 @@ impl Parse for MacroInput {
 
 #[proc_macro]
 pub fn lookup(input: TokenStream) -> TokenStream {
-    let MacroInput { message, func, .. } = parse_macro_input!(input as MacroInput);
+    let MacroInput {  func, .. } = parse_macro_input!(input as MacroInput);
 
     let sig = &func.sig;
     let name = &sig.ident;

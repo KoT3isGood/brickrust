@@ -14,6 +14,7 @@ pub mod farchive;
 pub mod tshared;
 pub mod uclass;
 pub mod uworld;
+pub mod utils;
 
 use brickworks::patterns::*;
 use brickrust_macros::sig;
@@ -40,4 +41,16 @@ pub(crate) unsafe fn init_signatures()
      * */
     let sig = lookup(sig!("F7 86 CC 00 00 00 80 00 00 10")).sub(0x51);
     StaticConstructObject_Internal = Some(transmute(sig));
+
+    let sig = lookup(sig!("48 8b fa 48 85 c9 75 0c")).sub(0x1C);
+    fmalloc::Realloc = Some(transmute(sig));
+
+    let sig = lookup(sig!("48 8b fa 48 85 c9 75 0c")).sub(0x1C);
+    fmalloc::Malloc = Some(transmute(sig));
+    
+    let sig = lookup(sig!("48 8b f9 8b da 48 8b 0d ?? ?? ?? ?? 48 85 c9")).sub(0xA);
+    fmalloc::Malloc = Some(transmute(sig));
+
+    let sig = lookup(sig!("48 85 c9 74 2e 53"));
+    fmalloc::Free = Some(transmute(sig));
 }

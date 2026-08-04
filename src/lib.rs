@@ -18,7 +18,7 @@
 //!
 //!
 
-set_module_name!(b"brickrust");
+set_module_name!(b"brickrust\0");
 
 pub mod br;
 pub mod ue;

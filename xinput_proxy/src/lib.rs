@@ -8,8 +8,6 @@
 //!
 
 use core::ffi::*;
-use core::panic::PanicInfo;
-
 type BOOL = i32;
 type HANDLE = *mut c_void;
 type HINSTANCE = HANDLE;

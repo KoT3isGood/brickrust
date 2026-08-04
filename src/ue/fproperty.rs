@@ -33,7 +33,6 @@ pub struct FPropertyVTable
     pub CopyValuesInternal: unsafe extern "C" fn(),
     pub GetValueTypeHashInternal: unsafe extern "C" fn(),
     pub CopySingleValueToScriptVM: unsafe extern "C" fn(),
-
 }
 
 #[repr(C)]
@@ -53,3 +52,6 @@ pub struct FProperty {
     pub destructor_link_next: *mut FProperty,
     pub post_construct_link_next: *mut FProperty,
 }
+
+#[allow(non_upper_case_globals)]
+static mut FPropertyVTable_ptr: *const FPropertyVTable = core::ptr::null();

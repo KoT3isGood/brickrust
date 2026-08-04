@@ -8,7 +8,7 @@ pub struct FReferenceControllerBase {
     pub weak_reference_count: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct TSharedPtr<T> {
     pub object: *mut T,

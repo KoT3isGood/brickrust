@@ -19,7 +19,7 @@ endif
 CARGO_TARGET = --target x86_64-pc-windows-gnu
 
 doc:
-	cargo doc $(CARGO_TARGET)
+	cargo doc $(CARGO_TARGET) --examples
 
 ifeq ($(dev),true)
 build:
@@ -35,13 +35,16 @@ install: build
 	cp "$(TARGET)/deps/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	cp "$(TARGET)/deps/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	mkdir -p "$(DIR)/brickworks"
-	cp "$(TARGET)/examples/basic_init.dll" "$(DIR)/brickworks" 
 	cp "/usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll" "$(DIR)" 
 	cp "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll" "$(DIR)" 
 
+install_examples:
+	cp "$(TARGET)/examples/workshop_allow_modded.dll" "$(DIR)/brickworks" 
+
 
 else
-install: help
+install:
+install_examples:
 endif
 
 run: install
