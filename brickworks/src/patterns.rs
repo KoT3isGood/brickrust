@@ -1,4 +1,5 @@
 use crate::{br_print, win32::*};
+use crate::BrickRust_print;
 
 #[derive(Debug)]
 pub struct Signature {
@@ -45,11 +46,30 @@ pub unsafe fn lookup_data( data: *const u8, data_len: usize, sign: Signature ) -
 /**
  * Searches game for specifc signature
  * */
-pub unsafe fn lookup( sign: Signature ) -> *const u8
+pub unsafe fn lookup_unsafe( sign: Signature ) -> *const u8
 {
     let data_len: usize = get_base_size();
     let data: *const u8 = get_base_address() as *const u8;
     lookup_data(data, data_len, sign)
+}
+
+/**
+ * Searches game for specifc signature
+ * Panics when not found
+ * */
+pub fn lookup( note: &'static str, sign: Signature ) -> *const u8
+{
+    let sig = unsafe { lookup_unsafe(sign) };
+    if sig.is_null()
+    {
+        br_print!("{}: {:p}", note, sig);
+        panic!("Failed to find {}", note)
+    }
+    else
+    {
+        br_print!("{}: {:p}", note, sig);
+    }
+    sig
 }
 
 #[cfg(test)]

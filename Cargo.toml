@@ -14,6 +14,10 @@ crate-type = ["dylib"]
 name = "workshop_allow_modded"
 crate-type = ["dylib"]
 
+[[example]]
+name = "function_tests"
+crate-type = ["dylib"]
+
 [features]
 default=["brick_rigs_bricks_1_11_0"]
 brick_rigs_bricks_1_11_0=[]

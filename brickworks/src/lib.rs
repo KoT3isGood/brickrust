@@ -1,9 +1,9 @@
 //!
 //! This crate is a basic mod loader for Brick Rigs, made to load dynamic libraries.
-//! Provides basic logging and signature finding for Rust frontends?.
+//! Provides basic logging and signature finding for mods.
 //!
 //! # Folder structure
-//! 
+//! This is required folder structure for windows
 //! ```txt
 //! BrickRigs.exe
 //! BrickRigs/
@@ -25,6 +25,7 @@
 //! Required functions for a mod:
 //! - `mod_info` -- returns mod metadata
 //! - `mod_init` -- initializes mod
+//! See
 //!
 
 #![allow(static_mut_refs)]
@@ -46,7 +47,6 @@ use core::ffi::c_char;
 
 static mut MODS: Option<HashMap<OsString, Library>> = None;
 
-
 /**
  * Scans for mods and initializes them.
  * 
@@ -54,6 +54,10 @@ static mut MODS: Option<HashMap<OsString, Library>> = None;
  * */
 #[no_mangle]
 unsafe extern "C" fn brickworks_init() {
+    static mut INITED: bool = false;
+    if INITED {return}
+    INITED = true;
+
     logger::init();
     hookmgr::init();
     MODS = Some(HashMap::new());
@@ -88,6 +92,7 @@ unsafe extern "C" fn brickworks_init() {
         mod_init();
         br_print!("Mod initialized: {}", name.to_str().unwrap() );
     }
+
 }
 
 #[no_mangle]

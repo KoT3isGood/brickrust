@@ -1,11 +1,11 @@
-use brickworks::br_print;
+
+use brickworks::{br_print, set_module_name};
+set_module_name!("tarray");
 
 use super::fmalloc;
 use core::fmt;
 use core::fmt::*;
 use super::FName;
-use brickworks::set_module_name;
-set_module_name!("tarray");
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -94,6 +94,10 @@ impl fmt::Display for FString {
         }
     }
 }
+unsafe extern "C"
+{
+    fn strlen( s: *const u8 ) -> usize;
+}
 
 impl FString
 {
@@ -124,7 +128,27 @@ impl FString
         }
         fs
     }
-    pub unsafe fn equals_str( &mut self, s: &'static str ) -> bool
+    pub unsafe fn equals_cstr( &self, s: *const u8 ) -> bool
+    {
+        if strlen(s)+1 != self.data.num as usize {
+            return false;
+        }
+        for i in 0..self.data.num
+        {
+            br_print!("{}", *s.add( i as usize ) as char);
+            let mut wc: u16 = 0u16;
+            mbtowc(&mut wc, s.add(i as usize), 1);
+
+            if wc != *self.data.data.add(i as usize)
+            {
+                return false;
+            }
+
+        }
+
+        true
+    }
+    pub unsafe fn equals_str( &self, s: &'static str ) -> bool
     {
         if s.len() != self.data.num as usize {
             return false;
@@ -142,7 +166,6 @@ impl FString
         }
 
         true
-
     }
     pub unsafe fn free( &mut self )
     {

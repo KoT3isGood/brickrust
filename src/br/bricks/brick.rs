@@ -1,6 +1,5 @@
 
 use crate::ue::coreuobject::*;
-use crate::ue::uclass::*;
 use crate::br::properties::interface::IBrickPropertyInterface;
 
 

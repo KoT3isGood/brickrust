@@ -89,12 +89,12 @@ impl FNumericBrickPropertyBase
 {
     unsafe extern "C" fn ExportProperty( prop: *mut FBrickProperty, container: *const ()) -> FString
     {
-        let mut value = FNumericBrickPropertyValue::default();
+        let value = FNumericBrickPropertyValue::default();
         todo!()
     }
     pub unsafe extern "C" fn GetTypeName( _prop: *mut FBrickProperty ) -> FName
     {
-        let mut name = FName::default();
+        let name = FName::default();
         //BrickRust_string_to_fname(b"FNumericBrickProperty GetTypeName\0".as_ptr(), &mut name);
         br_print!("FNumericBrickPropertyBase GetTypeName");
         return name;

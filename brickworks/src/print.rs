@@ -1,6 +1,5 @@
 use core::fmt::{self, Write};
 use core::ptr;
-use core::slice;
 extern "C"
 {
     fn malloc( size: usize ) -> *mut ();
@@ -84,11 +83,15 @@ unsafe extern "C"
     pub fn BrickRust_print( str: *const u8 );
 }
 
+/**
+ * Sets module name for br_print
+ * [ name ] your log
+ * */
 #[macro_export]
 macro_rules! set_module_name {
     ($name: expr) => {
         #[allow(non_snake_case)]
-        pub unsafe fn BrickRust_print( str: *const u8 )
+        unsafe fn BrickRust_print( str: *const u8 )
         {
             use brickworks::logger;
             logger::brickworks_puts(

@@ -9,7 +9,6 @@ pub use crate::ue::tarray::TArray;
 pub use crate::ue::coreuobject::UObject;
 use crate::ue::toptional::TOptional;
 pub use crate::br::brickeditor::saveversion::*;
-use core::mem::zeroed;
 use brickworks::br_print;
 use crate::BrickRust_print;
 #[repr(C)]

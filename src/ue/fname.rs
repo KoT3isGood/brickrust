@@ -1,6 +1,4 @@
-use std::ffi::CStr;
 
-use super::tarray::FString;
 
 use std::collections::HashMap;
 
@@ -10,8 +8,7 @@ pub unsafe fn gnames() -> *mut FNamePool
     GNAMES_PTR
 }
 
-use brickworks::{br_print, set_module_name};
-set_module_name!("tarray");
+use brickworks::set_module_name;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -118,16 +115,16 @@ impl FName
         let current_block = (*gnames()).allocator.current_block as usize;
         for i in 0..(*gnames()).allocator.current_block as usize
         {
-            let mut n = FName::block_search_str(s, blocks[i], BLOCK_SIZE);
-            if (n.is_some())
+            let n = FName::block_search_str(s, blocks[i], BLOCK_SIZE);
+            if n.is_some()
             {
                 let mut n = n.unwrap();
                 n.comparison_index |= (i << 16) as u32;
                 return n;
             }
         }
-        let mut n = FName::block_search_str(s, blocks[current_block], (*gnames()).allocator.current_block_cursor as usize );
-        if (n.is_some())
+        let n = FName::block_search_str(s, blocks[current_block], (*gnames()).allocator.current_block_cursor as usize );
+        if n.is_some()
         {
             let mut n = n.unwrap();
             n.comparison_index |= (current_block << 16) as u32;
@@ -144,8 +141,10 @@ impl FName
     pub unsafe fn search_str( s: &'static str ) -> FName
     {
         static mut MAP: Option<HashMap<&'static str, FName>> = None;
+        #[allow(static_mut_refs)]
         if MAP.is_none() { MAP = Some(HashMap::new()); }
-        let mut map = MAP.as_mut().unwrap();
+        #[allow(static_mut_refs)]
+        let map = MAP.as_mut().unwrap();
 
         let name = map.get(s);
         if name.is_none() {

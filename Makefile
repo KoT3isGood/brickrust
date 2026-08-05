@@ -40,6 +40,7 @@ install: build
 
 install_examples:
 	cp "$(TARGET)/examples/workshop_allow_modded.dll" "$(DIR)/brickworks" 
+	cp "$(TARGET)/examples/function_tests.dll" "$(DIR)/brickworks" 
 
 
 else

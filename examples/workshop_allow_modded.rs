@@ -1,11 +1,12 @@
-//! This mod introduces a function override which makes the game think there are no modded bricks in
-//! a vehicle
+//! This example shows how to hook Brick Rigs functions.
+//!
+//! It introduces hook to the `UBrickStatics::IsModdedAsset` in order to make vehicles with modded
+//! bricks uploadable to the workshop.
 
 #![allow(static_mut_refs)]
 use brickrust::ue::coreuobject::UObject;
 use brickworks::hookmgr::hook;
 use brickworks::modinfo::ModInfo;
-use brickworks::patterns::*;
 use brickrust::br;
 use brickrust;
 use brickrust_macros::sig;
@@ -30,7 +31,6 @@ unsafe extern "C" fn my_is_asset_modded( param: *mut UObject ) -> bool
 {
     false
 }
-
 
 #[no_mangle]
 pub unsafe extern "C" fn mod_init()

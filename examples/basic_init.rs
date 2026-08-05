@@ -1,10 +1,8 @@
-use brickrust::ue::tarray::*;
 use brickworks::modinfo::ModInfo;
 use brickrust::ue::coreuobject::*;
-use brickrust::ue::uclass::*;
 use brickrust::br::bricks::brick::*;
 use brickrust::utils::vtable::*;
-use brickworks::{br_print, set_module_name};
+use brickworks::set_module_name;
 set_module_name!("basic init");
 
 #[no_mangle]
@@ -22,7 +20,7 @@ extern "C" fn mod_info() -> ModInfo
 static mut INITED: bool = false;
 
 /**
- * this function is called during the initialization stage of brickworks
+ * this function is called at the early stages of loading
  * 
  * call `brickrust::init` to allow usage of brickrust
  * */
@@ -46,7 +44,7 @@ unsafe extern "C" fn is_rc_brick( brick: *mut UBrick ) -> bool
 
 pub unsafe fn ue_object_init( obj: *mut UObjectBase )
 {
-    if ((*obj).IsA("UBrick"))
+    if (*obj).IsA("UBrick")
     {
         let brick = obj as *mut UBrick;
         /* 

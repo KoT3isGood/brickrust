@@ -25,8 +25,6 @@ struct MODULEINFO
 
 unsafe extern "system"
 {
-    fn LoadLibraryA( lib: LPCSTR ) -> HMODULE;
-    fn GetProcAddress( lib: HMODULE, proc: LPCSTR ) -> usize; 
     fn GetModuleHandleA( module: LPCSTR ) -> HMODULE;
     fn GetModuleInformation( process: HANDLE, module: HMODULE, modinfo: *mut MODULEINFO, cb: DWORD ) -> BOOL;
     fn GetCurrentProcess() -> HANDLE;

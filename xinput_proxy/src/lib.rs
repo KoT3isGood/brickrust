@@ -1,9 +1,8 @@
 #![allow(nonstandard_style)]
 
 //!
-//! a really simple proxy for xinput1_3.dll, which loads br_load.dll
+//! A really simple proxy for xinput1_3.dll, which loads brickworks
 //!
-//! basically jumps to right addresses
 //! uses assembly boo!
 //!
 

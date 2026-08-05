@@ -1,5 +1,4 @@
 
-use crate::ue::tarray::TArray;
 use crate::ue::tshared::*;
 use crate::ue::ftext::FText;
 use crate::br::properties::property::FBrickPropertyInstance;

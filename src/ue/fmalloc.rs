@@ -2,7 +2,6 @@
 #![allow(non_upper_case_globals)]
 
 pub const DEFAULT_ALIGNMENT: u32 = 0u32;
-use brickrust_macros::lookup;
 
 pub(crate) static mut Malloc: 
 Option<unsafe extern "C" fn ( count: usize, align: u32 ) -> *mut ()> = None;

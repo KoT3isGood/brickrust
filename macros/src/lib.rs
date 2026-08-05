@@ -42,7 +42,7 @@ pub fn sig(input: TokenStream) -> TokenStream {
 }
 
 struct MacroInput {
-    message: LitStr,
+    _message: LitStr,
     _comma: Token![,],
     func: ItemFn,
 }
@@ -50,7 +50,7 @@ struct MacroInput {
 impl Parse for MacroInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         Ok(MacroInput {
-            message: input.parse()?,
+            _message: input.parse()?,
             _comma: input.parse()?,
             func: input.parse()?,
         })

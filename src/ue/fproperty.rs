@@ -1,6 +1,5 @@
 use super::ffield::FField;
 use super::fname::FName;
-use super::farchive::FStructuredArchiveFromArchive;
 
 #[repr(C)]
 #[derive(Debug)]

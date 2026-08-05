@@ -1,4 +1,6 @@
-//! This example introduces basic 
+//! This example introduces basic brick properties for the game.
+//! It shows how to create numeric brick property which allows to enable and disable RC Brick
+//! properties
 //!
 //! # Limititations
 //! - How to add data to the class
@@ -25,7 +27,6 @@
 #![allow(static_mut_refs)]
 use brickrust::ue::fproperty::FProperty;
 use brickworks::modinfo::ModInfo;
-use brickworks::br_print;
 
 use brickrust::br::properties::interface::*;
 use brickrust::br::properties::reflection::*;
@@ -45,9 +46,6 @@ use brickrust::container_of;
 
 use brickrust::ue::fmalloc;
 use brickworks::set_module_name;
-
-use std::panic;
-use std::backtrace::Backtrace;
 
 use std::collections::HashMap;
 
@@ -152,7 +150,7 @@ static mut BRICKS_HASH: Option<HashMap<*mut UBrick, *mut CustomData>> = None;
 
 pub unsafe fn ue_object_init( obj: *mut UObjectBase )
 {
-    if ((*obj).IsA("UBrick"))
+    if (*obj).IsA("UBrick")
     {
         let brick = obj as *mut UBrick;
 

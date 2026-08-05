@@ -25,19 +25,14 @@ pub mod ue;
 pub mod utils;
 mod brickrust;
 
-use core::ffi::c_void;
-use core::ffi::CStr;
 
 use brickworks::br_print;
 use brickworks::set_module_name;
 use brickworks::hookmgr;
 
-use core::mem::transmute;
-use ue::fname::*;
 use ue::coreuobject::*;
-use ue::tarray::FString;
-use ue::uclass::*;
 use iced_x86::{Decoder, DecoderOptions, Formatter, Instruction, NasmFormatter};
+use ue::UEngine_Init_ptr;
 
 pub(crate) unsafe fn disassemble( data: *const u8 )
 {
@@ -67,34 +62,6 @@ unsafe fn init_signatures()
     br::init_signatures();
 }
 
-unsafe extern "C" fn static_construct( params: FStaticConstructObjectParameters) -> *mut UObjectBase
-{
-    let uobject = (StaticConstructObject_Internal_hook.unwrap())(params);
-    let (subhooks, count) = hookmgr::get_subhooks(
-        transmute(StaticConstructObject_Internal.unwrap())
-    );
-    let subhooks: *const unsafe fn( obj: *mut UObjectBase ) = transmute(subhooks);
-    for i in 0..count
-    {
-        (*subhooks.add(i))(uobject);
-    }
-    return uobject;
-}
-
-#[allow(non_upper_case_globals)]
-static mut StaticConstructObject_Internal_hook: Option<StaticConstructObject_t> = None;
-
-struct UnrealModContext
-{
-    pub construct_object: Option<unsafe fn( obj: *mut UObjectBase )>,
-
-}
-static mut CTX: UnrealModContext = UnrealModContext {
-    construct_object: None,
-};
-
-static mut INITED: bool = false;
-
 use std::backtrace::Backtrace;
 use std::panic;
 
@@ -104,33 +71,49 @@ use std::panic;
 #[no_mangle]
 pub unsafe fn init()
 {
+    static mut INITED: bool = false;
+    if INITED { return; }
+    INITED = true;
+
     panic::set_hook(Box::new(|info| {
         let bt = Backtrace::force_capture();
         br_print!("Panic: {}", info);
         br_print!("Backtrace:\n{}", bt);
     }));
 
-    if (INITED) { return; }
     init_signatures();
-
-    br_print!("{:#?}", StaticConstructObject_Internal_hook);
-    StaticConstructObject_Internal_hook = Some(
-        transmute(
-            hookmgr::hook(
-                StaticConstructObject_Internal.unwrap() as *const (), 
-                static_construct as *const ()
-            )
-        )
-    );
-    /*
-     * todo: make it brickworks thing
-     * */
-    br_print!("{:#?}", StaticConstructObject_Internal_hook);
-    br_print!("initialized brickrust");
-    INITED = true;
 }
 
 pub unsafe fn hook_construct_uobject( f: unsafe fn( obj: *mut UObjectBase ) )
 {
     hookmgr::add_subhook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
+
+}
+pub unsafe fn hook_post_engine_init( f: unsafe fn() )
+{
+    hookmgr::add_subhook(UEngine_Init_ptr.unwrap() as *const (), f as *const ());
+}
+
+#[macro_export]
+macro_rules! warn_version_mismatch {
+    () => {
+        let mi = mod_info();
+        let ver = $crate::br::statics::GetProjectVersion();
+        if ver.equals_cstr(mi.game_version) == false
+        {
+            br_print!("Version mismatch!")
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! panic_version_mismatch {
+    () => {
+        let mi = mod_info();
+        let ver = $crate::br::statics::GetProjectVersion();
+        if ver.equals_cstr(mi.game_version) == false
+        {
+            panic!("Version mismatch!")
+        }
+    };
 }

@@ -1,6 +1,5 @@
 #![allow(nonstandard_style)]
 
-use brickworks::br_print;
 
 use super::fname::*;
 use super::uclass::*;
@@ -171,9 +170,7 @@ impl UObject
         let mut cls = self.class_private;
         loop 
         {
-            if (
-                (*cls).ustruct.ufield.uobject.name_private.comparison_index == fname.comparison_index
-            )
+            if (*cls).ustruct.ufield.uobject.name_private.comparison_index == fname.comparison_index
             {
                 return true;
             }
