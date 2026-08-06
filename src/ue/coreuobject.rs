@@ -1,12 +1,18 @@
 #![allow(nonstandard_style)]
 
 
+use crate::ue::fframe::FFrame;
+
 use super::fname::*;
 use super::uclass::*;
 
 pub(crate) static mut GOBJECTS_PTR: *mut () = core::ptr::null_mut();
 pub(crate) static mut StaticConstructObject_Internal: Option<StaticConstructObject_t> = None;
 pub(crate) type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters) -> *mut UObjectBase;
+
+pub(crate) type fnProcessInternal = unsafe extern "C" fn(obj: *mut UObject, stack: *mut FFrame, result: *mut ());
+pub(crate) static mut ProcessInternal_ptr: Option<fnProcessInternal> = None;
+pub(crate) static mut ProcessInternal_hook: Option<fnProcessInternal> = None;
 
 pub unsafe fn GObject() -> *mut ()
 {

@@ -45,6 +45,15 @@ pub struct UClass {
     pub ustruct: UStruct,
 }
 
+/*
+ * Todo
+ * */
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct UFunction {
+    pub ustruct: UStruct,
+}
+
 /* todo: fix performance issues */
 impl UStruct
 {

@@ -18,10 +18,15 @@ crate-type = ["dylib"]
 name = "function_tests"
 crate-type = ["dylib"]
 
+[[example]]
+name = "magicmod"
+crate-type = ["dylib"]
+
 [features]
-default=["brick_rigs_bricks_1_11_0"]
-brick_rigs_bricks_1_11_0=[]
-brick_rigs_1_11_0=["brick_rigs_bricks_1_11_0"]
+default=["brick_rigs_bricks_1_11"]
+brick_rigs_bricks_1_11=[]
+brick_rigs_1_11=["brick_rigs_bricks_1_11"]
+process_internal_debug=[]
 
 [workspace]
 members = [ "macros", "brickworks", "xinput_proxy"]
@@ -33,6 +38,7 @@ brickworks = { path = "brickworks" }
 xinput1_3 = { path = "xinput_proxy" }
 min_hook_rs = "2.2.1"
 iced-x86 = "1.21.0"
+inventory = "0.3.24"
 
 [profile.dev]
 panic = "abort"

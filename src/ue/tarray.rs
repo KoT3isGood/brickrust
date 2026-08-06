@@ -135,7 +135,6 @@ impl FString
         }
         for i in 0..self.data.num
         {
-            br_print!("{}", *s.add( i as usize ) as char);
             let mut wc: u16 = 0u16;
             mbtowc(&mut wc, s.add(i as usize), 1);
 
@@ -150,6 +149,7 @@ impl FString
     }
     pub unsafe fn equals_str( &self, s: &'static str ) -> bool
     {
+        br_print!("{} {}", s.len(), self.data.num);
         if s.len() != self.data.num as usize {
             return false;
         }

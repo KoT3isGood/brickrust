@@ -39,8 +39,7 @@ install: build
 	cp "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll" "$(DIR)" 
 
 install_examples:
-	cp "$(TARGET)/examples/workshop_allow_modded.dll" "$(DIR)/brickworks" 
-	cp "$(TARGET)/examples/function_tests.dll" "$(DIR)/brickworks" 
+	cp "$(TARGET)/examples/magicmod.dll" "$(DIR)/brickworks" 
 
 
 else

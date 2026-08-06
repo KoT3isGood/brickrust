@@ -149,6 +149,10 @@ impl FName
         let name = map.get(s);
         if name.is_none() {
             let fname = FName::search_str_raw(s);
+            if fname.comparison_index == 0 
+            {
+                return NAME_NONE;
+            }
             let name = map.entry(s).or_insert(fname);
 
             return *name;

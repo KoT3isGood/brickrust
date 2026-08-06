@@ -1,19 +1,20 @@
-//! This example shows the usage of static functions across the game
-
-#![allow(static_mut_refs)]
+//! This is an implementation of https://github.com/Redacted00/BR_MagicMod with this mod tool
+//!
+use brickrust::bp_function;
 use brickworks::set_module_name;
 use brickworks::br_print;
 use brickworks::modinfo::ModInfo;
-use brickrust::ue::tarray::TArray;
 use brickrust::br;
 use brickrust;
-set_module_name!(b"function_tests\0");
+use brickrust::ue::blueprint::BlueprintFunction;
+use inventory::*;
+set_module_name!(b"magicmod\0");
 
 #[no_mangle]
 extern "C" fn mod_info() -> ModInfo
 {
     ModInfo { 
-        name: b"Static function usage\0".as_ptr(), 
+        name: b"Redacted's magic mod reimplementation\0".as_ptr(), 
         description: b"\0".as_ptr(), 
         version: b"1.0.0.0\0".as_ptr(),
         game_version: b"1.11.2\0".as_ptr(),
@@ -21,24 +22,14 @@ extern "C" fn mod_info() -> ModInfo
     }
 }
 
-unsafe fn test_stuff()
+bp_function! ( BeginPlay |obj, stack, result|
 {
-    brickrust::warn_version_mismatch!();
-
-    let game_version = br::statics::GetProjectVersion();
-    br_print!("Game version: {}", game_version);
-
-    let mut mods = TArray::new();
-    br::game::instance::GetEnabledModNames(&mut mods);
-    for i in 0..mods.num
-    {
-        br_print!(": {}", *mods.data.add(i as usize));
-    }
-}
+    br_print!("Small prank");
+});
 
 unsafe fn engine_init()
 {
-    test_stuff();
+    brickrust::warn_version_mismatch!();
 }
 
 #[no_mangle]

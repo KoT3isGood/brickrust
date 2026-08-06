@@ -65,6 +65,9 @@ unsafe fn init_signatures()
 use std::backtrace::Backtrace;
 use std::panic;
 
+use crate::ue::blueprint;
+use crate::ue::tarray::TArray;
+
 /**
  * BUG: This is ran twice. Why?
  * */
@@ -82,6 +85,7 @@ pub unsafe fn init()
     }));
 
     init_signatures();
+    blueprint::init();
 }
 
 pub unsafe fn hook_construct_uobject( f: unsafe fn( obj: *mut UObjectBase ) )
@@ -116,4 +120,27 @@ macro_rules! panic_version_mismatch {
             panic!("Version mismatch!")
         }
     };
+}
+
+pub unsafe fn check_blueprint_mod( mod_name: &'static str) -> bool
+{
+    let mut arr = TArray::new();
+    br::game::instance::GetEnabledModNames(&mut arr);
+    for i in 0..arr.num
+    {
+        let m = arr.data.add(i as usize);
+        if (*m).equals_str( mod_name )
+        {
+            return true;
+        }
+    }
+    false
+}
+
+pub unsafe fn ensure_blueprint_mod( m: &'static str)
+{
+    if check_blueprint_mod(m) == false
+    {
+        panic!("Mod must be present for app to work: {}", m)
+    }
 }

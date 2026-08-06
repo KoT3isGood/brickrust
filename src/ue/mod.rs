@@ -1,6 +1,7 @@
 #![allow(non_upper_case_globals)]
 pub mod coreuobject;
 pub mod ffield;
+pub mod fframe;
 pub mod fmalloc;
 pub mod fmath;
 pub mod fname;
@@ -18,13 +19,18 @@ pub mod uworld;
 pub mod utils;
 pub mod blueprint;
 
+use brickworks::br_print;
 use brickworks::patterns::*;
 use brickworks::hookmgr;
 use brickrust_macros::sig;
+use brickworks::set_module_name;
 use coreuobject::*;
-use uworld::GWORLD_PTR;
+use uworld::*;
 use crate::ue::fname::*;
+use crate::ue::tarray::FString;
 use core::mem::transmute;
+use fframe::FFrame;
+set_module_name!(b"ue\0");
 
 pub(crate) static mut UEngine_Init_ptr: Option<unsafe extern "C" fn (a: *mut (), b: *mut ())> = None;
 static mut UEngine_Init_hook: Option<unsafe extern "C" fn (a: *mut (), b: *mut ())> = None;
@@ -57,6 +63,49 @@ unsafe extern "C" fn engine_init(a: *mut (), b: *mut ())
     {
         (*subhooks.add(i))();
     }
+}
+
+unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, result: *mut ())
+{
+    let obj_name = (*obj).name_private;
+    let func_name = (*(*stack).node).ustruct.ufield.uobject.name_private;
+    #[cfg(feature = "process_internal_debug")]
+    {
+        let obj_str = FString::from_fname(obj_name);
+        let func_str = FString::from_fname(func_name);
+        br_print!("{} {}", obj_str, func_str);
+    }
+
+    use super::blueprint::BlueprintFunction;
+    /*
+     * Todo: we can do better using hashmaps
+     * */
+    for f in inventory::iter::<BlueprintFunction>
+    {
+        let fn_fname = FName::search_str(f.function_name);
+
+        let fn_str = FString::from_fname(fn_fname);
+        match f.class
+        {
+            None => {
+            }
+            Some(c) =>
+            {
+                let cls_fname = FName::search_str(c);
+                if cls_fname.comparison_index != obj_name.comparison_index
+                {
+                    continue;
+                }
+            }
+        }
+        if fn_fname.comparison_index != func_name.comparison_index
+        {
+            continue;
+        }
+        (f.function)(obj, stack, result);
+        return;
+    }
+    (ProcessInternal_hook.unwrap())(obj, stack, result)
 }
 
 pub(crate) unsafe fn init_signatures()
@@ -92,7 +141,7 @@ pub(crate) unsafe fn init_signatures()
         )
     );
 
-    let sig = lookup("StaticConstructObject_Internal", sig!("F7 86 CC 00 00 00 80 00 00 10")).sub(0x51);
+    let sig = lookup("UObject::StaticConstructObject_Internal", sig!("F7 86 CC 00 00 00 80 00 00 10")).sub(0x51);
     StaticConstructObject_Internal = Some(transmute(sig));
 
     StaticConstructObject_Internal_hook = Some(
@@ -100,6 +149,17 @@ pub(crate) unsafe fn init_signatures()
             hookmgr::hook(
                 StaticConstructObject_Internal.unwrap() as *const _, 
                 static_construct as *const _
+            )
+        )
+    );
+
+    let sig = lookup("UObject::ProcessInternal", sig!("48 8b d9 ff 90 28 02 00 00")).sub(0x2B);
+    ProcessInternal_ptr = Some(transmute(sig));
+    ProcessInternal_hook = Some(
+        transmute(
+            hookmgr::hook(
+                ProcessInternal_ptr.unwrap() as *const _, 
+                process_internal as *const _
             )
         )
     );
