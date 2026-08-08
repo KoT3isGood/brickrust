@@ -4,7 +4,7 @@ use crate::ue::fname::NAME_NONE;
 use crate::ue::fproperty::FProperty;
 pub use crate::ue::ftext::FText;
 pub use crate::ue::tshared::TSharedRef;
-pub use crate::ue::tarray::FString;
+pub use crate::ue::fstring::FString;
 pub use crate::ue::tarray::TArray;
 pub use crate::ue::coreuobject::UObject;
 use crate::ue::toptional::TOptional;

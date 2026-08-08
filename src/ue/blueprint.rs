@@ -32,7 +32,7 @@ macro_rules! bp_function {
                 }
         }
     };
-    ($class: ident $name:ident |$obj:ident, $stack:ident, $result:ident| $body:block) => {
+    ($class: expr, $name:ident |$obj:ident, $stack:ident, $result:ident| $body:block) => {
         use $crate::ue::fframe::*;
         use $crate::ue::coreuobject::*;
         use $crate::ue::blueprint::*;
@@ -43,7 +43,7 @@ macro_rules! bp_function {
         inventory::submit! {
             BlueprintFunction
             {
-                class: Some(stringify!($class)),
+                class: Some($class),
                 function_name: stringify!($name),
                 function: $name,
             }

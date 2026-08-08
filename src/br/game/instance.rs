@@ -1,5 +1,6 @@
 #![allow(non_upper_case_globals)]
 use crate::ue::tarray::*;
+use crate::ue::fstring::*;
 
 use core::mem::transmute;
 use brickrust_macros::sig;
@@ -17,6 +18,7 @@ pub static mut GetEnabledModsHash_ptr: Option<unsafe extern "C" fn () -> i32> = 
  *
  *
  * */
+
 #[inline]
 pub unsafe fn GetEnabledModNames( out_names: *mut TArray<FString> )
 {

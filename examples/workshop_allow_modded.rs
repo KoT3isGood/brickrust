@@ -9,9 +9,6 @@ use brickworks::hookmgr::hook;
 use brickworks::modinfo::ModInfo;
 use brickrust::br;
 use brickrust;
-use brickrust_macros::sig;
-
-use core::mem::zeroed;
 
 #[no_mangle]
 extern "C" fn mod_info() -> ModInfo
@@ -27,7 +24,7 @@ extern "C" fn mod_info() -> ModInfo
 
 
 
-unsafe extern "C" fn my_is_asset_modded( param: *mut UObject ) -> bool
+unsafe extern "C" fn my_is_asset_modded( _param: *mut UObject ) -> bool
 {
     false
 }

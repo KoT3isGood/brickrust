@@ -1,12 +1,16 @@
 #![allow(nonstandard_style)]
 
 
+use brickworks::br_print;
+use brickworks::set_module_name;
+set_module_name!("coreuobject");
+
 use crate::ue::fframe::FFrame;
+use crate::ue::fstring::FString;
 
 use super::fname::*;
 use super::uclass::*;
 
-pub(crate) static mut GOBJECTS_PTR: *mut () = core::ptr::null_mut();
 pub(crate) static mut StaticConstructObject_Internal: Option<StaticConstructObject_t> = None;
 pub(crate) type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters) -> *mut UObjectBase;
 
@@ -14,10 +18,75 @@ pub(crate) type fnProcessInternal = unsafe extern "C" fn(obj: *mut UObject, stac
 pub(crate) static mut ProcessInternal_ptr: Option<fnProcessInternal> = None;
 pub(crate) static mut ProcessInternal_hook: Option<fnProcessInternal> = None;
 
-pub unsafe fn GObject() -> *mut ()
+pub(crate) type fnStaticLoadObject = unsafe extern "C" fn
+( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObject;
+pub(crate) static mut StaticLoadObject_ptr: Option<fnStaticLoadObject> = None;
+pub unsafe fn StaticLoadObject(
+    class: *mut UClass,
+    in_outer: *mut UObject,
+    inname: *const u16,
+    filename: *const u16,
+    flags: u32,
+    reconciliation: bool
+) -> *mut UObject
 {
-    return GOBJECTS_PTR;
+    (StaticLoadObject_ptr.unwrap())(class, in_outer, inname, filename, flags, reconciliation)
+}
 
+#[repr(C)]
+#[derive(Debug)]
+pub struct FUObjectItem
+{
+    pub object: *mut UObject,
+    pub flags: i32,
+    pub cluster_root_index: i32,
+    pub serial: i32,
+
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct FChunkedFixedUObjectArray
+{
+    objects: *mut *mut FUObjectItem,
+    pre_allocated_objects: *mut FUObjectItem,
+    max_elements: i32,
+    num_elements: i32,
+    max_chunks: i32,
+    num_chunks: i32,
+}
+impl FChunkedFixedUObjectArray
+{
+    pub unsafe fn Count(&self) -> i32
+    {
+        self.num_elements
+    }
+    pub unsafe fn Get(&self, idx: i32) -> *mut FUObjectItem
+    {
+        let elements_per_chunk = self.max_elements / self.max_chunks;
+        let chunk = idx / elements_per_chunk;
+        let within = idx % elements_per_chunk;
+        let chunk = *self.objects.add(chunk as usize);
+        return chunk.add(within as usize);
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct FUObjectArray
+{
+    first_gc_index: i32,
+    last_non_gc_index: i32,
+    max_not_considered_gc: i32,
+    open_disregard: i32,
+    pub array: FChunkedFixedUObjectArray
+}
+
+pub(crate) static mut GOBJECTS_PTR: *mut FUObjectArray = core::ptr::null_mut();
+
+pub unsafe fn GObjects() -> &'static mut FUObjectArray
+{
+    return &mut *GOBJECTS_PTR;
 }
 
 #[repr(C)]
@@ -37,7 +106,7 @@ pub struct FStaticConstructObjectParameters
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy , Clone)]
 pub enum EObjectFlags {
     RF_NoFlags = 0x0000,
     RF_Public = 0x0001,
@@ -141,7 +210,7 @@ pub struct UObjectBaseVTable
     pub _a_65: unsafe extern "C" fn( brick: *mut UObject ),
     pub _a_66: unsafe extern "C" fn( brick: *mut UObject ),
     pub _a_67: unsafe extern "C" fn( brick: *mut UObject ),
-    pub process_event: unsafe extern "C" fn( brick: *mut UObject ),
+    pub process_event: unsafe extern "C" fn( obj: *mut UObject, f: *mut UFunction, params: *mut () ),
     pub _a_69: unsafe extern "C" fn( brick: *mut UObject ),
     pub _a_70: unsafe extern "C" fn( brick: *mut UObject ),
     pub _a_71: unsafe extern "C" fn( brick: *mut UObject ),
@@ -169,6 +238,59 @@ pub trait StaticClass {
 }
 impl UObject
 {
+    pub unsafe fn CallFunction<T>(&mut self, name: &'static str, params: *mut T )
+    {
+        let class = self.class_private;
+        let f = (*class).FindFunctionByName(name, true);
+        br_print!("{:p}",f);
+        br_print!("{:#?}",*f);
+        ((*(self.vtable as *mut UObjectBaseVTable)).process_event)(self, f, params as *mut _);
+
+    }
+    pub unsafe fn IsExact(&self, s: &'static str) -> bool
+    {
+        let mut name = String::new();
+
+        let (ptr, count) = self.name_private.as_sptr(); 
+        for i in 0..count
+        {
+            name.push(*ptr.add(i as usize) as char);
+        }
+
+        let mut cls = self.class_private;
+        loop 
+        {
+            let (ptr, count) =(*cls).ustruct.ufield.uobject.name_private.as_sptr(); 
+            name.push('.');
+            for i in 0..count
+            {
+                name.push(*ptr.add(i as usize) as char);
+            }
+
+            cls = (*cls).ustruct.super_struct as *const UClass;
+            if cls.is_null() { break; }
+        }
+        br_print!("{}", name);
+
+        name == s
+    }
+    pub unsafe fn IsOuterExact(&self, s: &'static str) -> bool
+    {
+        let name = self.name_private; 
+        let s = FString::from_fname(name);
+        br_print!("+  {}", s);
+        let mut cls = self.outer_private;
+        loop 
+        {
+            if cls.is_null() { break; }
+
+            let s = FString::from_fname((*cls).name_private);
+            br_print!("{}", s);
+            cls = (*cls).outer_private;
+        }
+        false
+    }
+
     pub unsafe fn IsA(&self, s: &'static str) -> bool
     {
         let trimmed = &s[1..];
@@ -183,6 +305,23 @@ impl UObject
 
             cls = (*cls).ustruct.super_struct as *const UClass;
             if cls.is_null() { break; }
+        }
+        false
+    }
+    pub unsafe fn IsOuterA(&self, s: &'static str) -> bool
+    {
+        let trimmed = &s[1..];
+        let fname = FName::search_str(trimmed);
+        let mut cls = self.outer_private;
+        loop 
+        {
+            if cls.is_null() { break; }
+            if (*cls).name_private.comparison_index == fname.comparison_index
+            {
+                return true;
+            }
+
+            cls = (*cls).outer_private;
         }
         false
     }

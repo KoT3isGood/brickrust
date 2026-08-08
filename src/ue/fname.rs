@@ -8,7 +8,8 @@ pub unsafe fn gnames() -> *mut FNamePool
     GNAMES_PTR
 }
 
-use brickworks::set_module_name;
+use brickworks::{br_print, set_module_name};
+set_module_name!("fname");
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -83,11 +84,13 @@ impl FName
         {
             let entry = it as *const FNamePoolFNameEntry;
 
-            let len = (*entry).key >> 6 as u16;
+            let len = (*entry).key as u16 >> 6;
             if len == 0 { return None; }
             let len = len as usize;
+
             if len != s.len() { 
-                it = it.add(2).add(len); 
+                if (*entry).key & 0x1 != 0 { it = it.add(2).add((len as usize) * 2); } 
+                else { it = it.add(2).add(len); }
                 it = it.add(it.align_offset(2));
                 continue 
             }
@@ -96,13 +99,12 @@ impl FName
                 let idx = (it.offset_from(start) as usize / 2) as u32;
                 return Some(FName { comparison_index: idx, number: 0 })
             }
-            it = it.add(2).add(len);
+            if (*entry).key & 0x1 != 0 { it = it.add(2).add((len as usize) * 2); } 
+            else { it = it.add(2).add(len); }
             it = it.add(it.align_offset(2));
         }
         None
     }
-
-
 
     /**
      * Finds FName from string
@@ -115,7 +117,7 @@ impl FName
         let current_block = (*gnames()).allocator.current_block as usize;
         for i in 0..(*gnames()).allocator.current_block as usize
         {
-            let n = FName::block_search_str(s, blocks[i], BLOCK_SIZE);
+            let n = FName::block_search_str(s, blocks[i], BLOCK_SIZE );
             if n.is_some()
             {
                 let mut n = n.unwrap();

@@ -5,7 +5,7 @@ use brickrust_macros::sig;
 use brickworks::{br_print, patterns::*, set_module_name};
 
 use crate::ue::coreuobject::UObject;
-use crate::ue::tarray::*;
+use crate::ue::fstring::*;
 
 
 pub static mut GetProjectVersion_ptr: Option<unsafe extern "C" fn() -> FString> = None;

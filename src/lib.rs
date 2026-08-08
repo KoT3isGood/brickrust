@@ -32,7 +32,7 @@ use brickworks::hookmgr;
 
 use ue::coreuobject::*;
 use iced_x86::{Decoder, DecoderOptions, Formatter, Instruction, NasmFormatter};
-use ue::UEngine_Init_ptr;
+use ue::*;
 
 pub(crate) unsafe fn disassemble( data: *const u8 )
 {
@@ -68,9 +68,6 @@ use std::panic;
 use crate::ue::blueprint;
 use crate::ue::tarray::TArray;
 
-/**
- * BUG: This is ran twice. Why?
- * */
 #[no_mangle]
 pub unsafe fn init()
 {
@@ -97,7 +94,16 @@ pub unsafe fn hook_post_engine_init( f: unsafe fn() )
 {
     hookmgr::add_subhook(UEngine_Init_ptr.unwrap() as *const (), f as *const ());
 }
+pub unsafe fn hook_post_load_map( f: unsafe fn() )
+{
+    hookmgr::add_subhook(UEngine_LoadMap_ptr.unwrap() as *const (), f as *const ());
+}
 
+/**
+ * Drops a warning when the version doesn't match the one provided in the mod's description.
+ *
+ * Cannot be ran during mod initialization
+ * */
 #[macro_export]
 macro_rules! warn_version_mismatch {
     () => {
@@ -110,6 +116,11 @@ macro_rules! warn_version_mismatch {
     };
 }
 
+/**
+ * Panics when the version doesn't match the one provided in the mod's description.
+ *
+ * Cannot be ran during mod initialization
+ * */
 #[macro_export]
 macro_rules! panic_version_mismatch {
     () => {
@@ -122,6 +133,11 @@ macro_rules! panic_version_mismatch {
     };
 }
 
+/** 
+ * Returns true if the mod is present
+ *
+ * Cannot be ran during mod initialization
+ * */
 pub unsafe fn check_blueprint_mod( mod_name: &'static str) -> bool
 {
     let mut arr = TArray::new();
@@ -137,6 +153,11 @@ pub unsafe fn check_blueprint_mod( mod_name: &'static str) -> bool
     false
 }
 
+/** 
+ * Panics if the mod is not present
+ *
+ * Cannot be ran during mod initialization
+ * */
 pub unsafe fn ensure_blueprint_mod( m: &'static str)
 {
     if check_blueprint_mod(m) == false

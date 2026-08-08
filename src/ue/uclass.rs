@@ -1,8 +1,15 @@
 #![allow(nonstandard_style)]
+use brickworks::br_print;
+
+use crate::ue::fname::FName;
+
 use super::fproperty::*;
 use super::tarray::*;
 use super::ffield::*;
 use super::coreuobject::*;
+
+pub(crate) static mut UClass_FindFunctionByName_ptr: Option<unsafe extern "C" fn (cls: *const UClass, name: FName, inherit: u32) -> *mut UFunction> = None;
+
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -43,6 +50,16 @@ pub struct UStruct {
 #[derive(Debug, Copy, Clone)]
 pub struct UClass {
     pub ustruct: UStruct,
+}
+
+impl UClass
+{
+    pub unsafe fn FindFunctionByName(&self, name: &'static str, inherit: bool ) -> *mut UFunction
+    {
+        let n = FName::search_str(name);
+        (UClass_FindFunctionByName_ptr.unwrap())(self, n, inherit as u32)
+    }
+
 }
 
 /*

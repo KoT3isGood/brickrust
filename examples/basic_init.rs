@@ -57,10 +57,3 @@ pub unsafe fn ue_object_init( obj: *mut UObjectBase )
     }
 }
 
-pub fn frame()
-{
-}
-
-pub fn deinit()
-{
-}
