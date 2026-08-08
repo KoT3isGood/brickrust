@@ -21,6 +21,13 @@ pub(crate) static mut ProcessInternal_hook: Option<fnProcessInternal> = None;
 pub(crate) type fnStaticLoadObject = unsafe extern "C" fn
 ( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObject;
 pub(crate) static mut StaticLoadObject_ptr: Option<fnStaticLoadObject> = None;
+
+pub(crate) static mut UCLASS: *mut UClass = core::ptr::null_mut();
+pub unsafe fn default_uclass() -> *mut UClass
+{
+    UCLASS
+}
+
 pub unsafe fn StaticLoadObject(
     class: *mut UClass,
     in_outer: *mut UObject,
@@ -242,8 +249,6 @@ impl UObject
     {
         let class = self.class_private;
         let f = (*class).FindFunctionByName(name, true);
-        br_print!("{:p}",f);
-        br_print!("{:#?}",*f);
         ((*(self.vtable as *mut UObjectBaseVTable)).process_event)(self, f, params as *mut _);
 
     }

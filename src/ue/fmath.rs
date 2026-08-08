@@ -9,6 +9,14 @@ pub struct FVector
 }
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default)]
+pub struct FVector2D
+{
+    pub x: f32,
+    pub y: f32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct FRotator
 {
     pub pitch: f32,

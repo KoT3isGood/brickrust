@@ -45,6 +45,23 @@ impl FString
     {
         return FString { data: TArray::<u16>::new()}
     }
+    /// Creates an FString from rust string.
+    /// Generally recommended to add null-terminator for blueprints and other content.
+    ///
+    /// ```
+    /// let s = FString::from_str("this and example\0");
+    /// ```
+    pub unsafe fn from_slice( s: &[u8] ) -> FString
+    {
+        let fs = FString { data: TArray::<u16>::init( 0, s.len() as i32 ) };
+        for i in 0..s.len()
+        {
+            let mut wc: u16 = 0u16;
+            mbtowc(&mut wc, s.as_ptr().add(i), 1);
+            *fs.data.data.add(i) = wc;
+        }
+        fs
+    }
     pub unsafe fn from_str( s: &'static str) -> FString
     {
         let fs = FString { data: TArray::<u16>::init( 0, s.len() as i32 ) };

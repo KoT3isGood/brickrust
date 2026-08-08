@@ -13,6 +13,9 @@ pub struct BlueprintFunction
 
 inventory::collect!(BlueprintFunction);
 
+///
+/// Creates function overrides in blueprints
+///
 #[macro_export]
 macro_rules! bp_function {
     ($name:ident |$obj:ident, $stack:ident, $result:ident| $body:block) => {

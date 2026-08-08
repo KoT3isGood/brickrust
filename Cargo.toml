@@ -9,7 +9,7 @@ brick_rigs_1_11=["brick_rigs_bricks_1_11"]
 process_internal_debug=[]
 
 [workspace]
-members = [ "macros", "brickworks", "xinput_proxy", "devlibs/microui"]
+members = [ "macros", "brickworks", "xinput_proxy" ]
 
 [dependencies]
 bitflags= "2.13.1"
@@ -27,19 +27,6 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
-
-
-[dev-dependencies]
-microui={path="devlibs/microui"}
-
-
-
-
-
-
-
-
-
 
 [[example]]
 name = "basic_init"

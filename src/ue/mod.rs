@@ -126,6 +126,22 @@ unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, res
 }
 use core::ptr::read_unaligned;
 
+use crate::hook_post_engine_init;
+
+unsafe fn engine_load()
+{
+    for i in 0..GObjects().array.Count()
+    {
+        let obj = GObjects().array.Get(i);
+        let obj = (*obj).object;
+        let name = FName::search_str("Class");
+        if (*obj).name_private.comparison_index == name.comparison_index
+        {
+            UCLASS = obj as *mut UClass;
+        }
+    }
+}
+
 pub(crate) unsafe fn init_signatures()
 {
     gameplay::init_signatures();
@@ -197,4 +213,6 @@ pub(crate) unsafe fn init_signatures()
             )
         )
     );
+
+    hook_post_engine_init(engine_load);
 }
