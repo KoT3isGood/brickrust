@@ -1,23 +1,84 @@
-//! This crate is a library for using Brick Rigs
-//!
-//! It provides headers for the engine and the game.
-//!
-//! 
+//! This crate is a library for using Brick Rigs and Unreal Engine.
+//! It provides tooling to create mods with [brickworks]
 //! 
 //! # Creating simple mods
+//!
+//! ## Your `Cargo.toml`
+//! Your mod must be packed as dylib for it to work properly with [brickworks].
+//!
+//! ```toml
+//! [package]
+//! name = "your_mod"
+//! edition = "2021" # preferred for crust-like experience
+//!
+//! [lib]
+//! crate-type = ["dylib"]
+//! ```
 //! 
+//! Now you can compile your mod using `cargo build --target x86_64-pc-windows-gnu`
+//! ~~(it is the only one we support for now)~~
 //!
 //!
+//! ## Initialization 
+//! All mods using [brickworks] must have `mod_info` and `mod_init` functions.
+//! You can copy over this template.
 //!
+//! ```
+//! #[no_mangle]
+//! unsafe extern "C" fn mod_info() -> ModInfo
+//! {
+//!     ModInfo { 
+//!         name: b"Mod name\0".as_ptr(), 
+//!         description: b"Mod description\0".as_ptr(), 
+//!         version: b"0.0\0".as_ptr(),
+//!         game_version: b"1.11.2\0".as_ptr(), // used for runtime checks
+//!         authors: b"you\0".as_ptr() 
+//!     }
+//! }
 //!
+//! #[no_mangle]
+//! unsafe extern "C" fn mod_init()
+//! {
+//!     brickworks::init()
+//!     /* your code*/
+//! }
+//! ```
 //!
+//! `mod_init` is ran before the engine is initialized, so it is not recommended to run engine
+//! functions for spawning actors, etc.
 //!
+//! ## Running engine functions
+//! To access different engine modules different engine initialization is required.
+//! To provide this pipeline the hooks are provides
 //!
+//! You can run these function during mod_init to hook the engine using
+//! [`hook_post_engine_init`] and map using [`hook_post_load_map`]
+//! ```
+//! /* required to access static game functions and other stuff */
+//! brickrust::hook_post_engine_init(engine_init);
+//! /* required to GWorld() */
+//! brickrust::hook_post_load_map(engine_loadmap);
+//! ```
 //!
+//! You can also hook static construct of UObjects using [`hook_construct_uobject`] to modify
+//! UObjects at their creations. For example to replace vTables [`utils::vtable`]
 //!
+//! ```
+//! brickrust::hook_construct_uobject(engine_construct_uobject)
+//! ```
 //!
+//! ## Runtime dependency checks
+//! Your mods can validation multiple conditions for mod to run.
+//! This has been added to ensure vTable and structure compatibility.
+//! All of them must be ran after engine initialization.
+//! - To validate game version you can use [`warn_version_mismatch`] and [`panic_version_mismatch`].
+//! - To validate presence of blueprint mod you can use [`check_blueprint_mod`] and
+//! [`ensure_blueprint_mod`].
+//! 
+//! # Installing a mod
 //!
-
+//! Copy compiled mod library from target directory to the `steamapps/Brick Rigs/brickworks`
+//!
 set_module_name!(b"brickrust\0");
 
 pub mod br;
@@ -68,6 +129,10 @@ use std::panic;
 use crate::ue::blueprint;
 use crate::ue::tarray::TArray;
 
+/**
+ * Sets up all the signatures for engine interactions.
+ * You cannot call any engine and game functions before calling this.
+ * */
 #[no_mangle]
 pub unsafe fn init()
 {
