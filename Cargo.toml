@@ -1,6 +1,12 @@
 [package]
 name = "brickrust"
 edition = "2021"
+license = "MIT"
+description = "A library which allows Brick Rigs modding"
+readme = "readme.md"
+repository = "https://github.com/KoT3isGood/brickrust"
+version = "0.0.1"
+publish = true
 
 [features]
 default=["brick_rigs_bricks_1_11"]
@@ -13,9 +19,8 @@ members = [ "macros", "brickworks", "xinput_proxy" ]
 
 [dependencies]
 bitflags= "2.13.1"
-brickrust_macros = { path = "macros" }
-brickworks = { path = "brickworks" }
-xinput1_3 = { path = "xinput_proxy" }
+brickrust_macros = { version = "0.0.1", path = "macros" }
+brickworks = { version = "0.0.1", path = "brickworks" }
 min_hook_rs = "2.2.1"
 iced-x86 = "1.21.0"
 inventory = "0.3.24"

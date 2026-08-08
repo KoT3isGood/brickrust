@@ -19,7 +19,6 @@ pub mod utils;
 pub mod blueprint;
 pub mod gameplay;
 
-use brickworks::br_print;
 use brickworks::patterns::*;
 use brickworks::hookmgr;
 use brickrust_macros::sig;
@@ -27,7 +26,6 @@ use brickworks::set_module_name;
 use coreuobject::*;
 use uclass::*;
 use fname::*;
-use fstring::FString;
 use core::mem::transmute;
 use fframe::FFrame;
 set_module_name!(b"ue\0");

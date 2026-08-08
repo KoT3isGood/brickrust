@@ -1,13 +1,6 @@
 //! This example shows the usage of static functions across the game
 
 #![allow(static_mut_refs)]
-use core::slice;
-use std::intrinsics::copy_nonoverlapping;
-use std::ptr::null_mut;
-
-use brickrust::ue::fmath::*;
-use brickrust::ue::fname::FName;
-use brickrust::ue::fstring::FString;
 use brickworks::set_module_name;
 use brickworks::br_print;
 use brickworks::modinfo::ModInfo;

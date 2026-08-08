@@ -1,6 +1,11 @@
 [package]
 name = "brickrust_macros"
 edition = "2021"
+version = "0.0.1"
+license = "MIT"
+description = "Macros for brickrust"
+repository = "https://github.com/KoT3isGood/brickrust"
+publish = true
 
 [lib]
 name = "brickrust_macros"
@@ -10,5 +15,3 @@ proc-macro=true
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
-
-
