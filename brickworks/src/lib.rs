@@ -71,6 +71,10 @@ unsafe extern "C" fn brickworks_init() {
     {
         use modinfo::ModInfo;
         let f_ = m.1.get(b"mod_info\0");
+        if f_.is_err()
+        {
+            panic!("mod_info: {}", f_.err().unwrap())
+        }
         let f: Symbol<extern "C" fn () -> ModInfo> = f_.unwrap();
         let modinfo = f();
 
@@ -88,6 +92,10 @@ unsafe extern "C" fn brickworks_init() {
 
         /* because pointers are per-dll we need to init them */
         let mod_init_ = m.1.get(b"mod_init\0");
+        if mod_init_.is_err()
+        {
+            panic!("mod_init: {}", mod_init_.err().unwrap())
+        }
         let mod_init: Symbol<extern "C" fn ()> = mod_init_.unwrap();
         mod_init();
         br_print!("Mod initialized: {}", name.to_str().unwrap() );

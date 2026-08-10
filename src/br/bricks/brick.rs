@@ -7,10 +7,12 @@ use crate::br::properties::interface::IBrickPropertyInterface;
 #[derive(Debug, Copy, Clone)]
 pub struct UBrickVTable
 {
-    pub object: UObjectBaseVTable,
-    pub GetNetPushIdDynamic: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub object: UObjectVTable,
+    /*
+    figure these out
     pub PostLoadBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
     pub PostInitializeBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
+    */
     pub UninitializeBrickEditorObject: unsafe extern "C" fn( brick: *mut UBrick ),
     pub GetBrickEditorObjectDisplayName: unsafe extern "C" fn( brick: *mut UBrick ),
     pub GetEditorInterface: unsafe extern "C" fn( brick: *mut UBrick ),

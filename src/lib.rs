@@ -77,7 +77,8 @@
 //! 
 //! # Installing a mod
 //!
-//! Copy compiled mod library from target directory to the `steamapps/Brick Rigs/brickworks`
+//! Copy compiled mod library from target directory to the `steamapps/Brick Rigs/brickworks`.
+//! For any library dependencies they must be put in `steamapps/Brick Rigs`.
 //!
 set_module_name!(b"brickrust\0");
 

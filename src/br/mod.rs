@@ -7,6 +7,7 @@ pub mod properties;
 pub mod game;
 pub mod utils;
 pub mod statics;
+pub mod modhook;
 
 use core::mem::transmute;
 use brickrust_macros::sig;
