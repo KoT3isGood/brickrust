@@ -15,3 +15,7 @@ proc-macro=true
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-gnu"]
+default-target = "x86_64-pc-windows-gnu"

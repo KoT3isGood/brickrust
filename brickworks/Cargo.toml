@@ -14,3 +14,7 @@ min_hook_rs = "2.2.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-gnu"]
+default-target = "x86_64-pc-windows-gnu"

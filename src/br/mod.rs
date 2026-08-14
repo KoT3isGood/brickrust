@@ -9,6 +9,7 @@ pub mod utils;
 pub mod statics;
 pub mod modhook;
 pub mod vehicle;
+pub mod items;
 
 use core::mem::transmute;
 use brickrust_macros::sig;

@@ -1,28 +1,28 @@
 
 use crate::ue::{coreuobject::GObjects, fmalloc};
 
-#[derive(Debug)]
 #[repr(C)]
+#[derive(Debug, Clone, Copy)]
 pub struct FReferenceControllerBase {
     pub shared_reference_count: i32,
     pub weak_reference_count: i32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct TSharedPtr<T> {
     pub object: *mut T,
     pub reference_controller: *mut FReferenceControllerBase,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct TWeakPtr<T> {
     pub object: *mut T,
     pub reference_controller: *mut FReferenceControllerBase,
 }
-#[derive(Debug, Clone, Copy)]
 #[repr(C)]
+#[derive(Debug, Clone, Copy)]
 pub struct FWeakObjectPtr {
     pub object_index: i32,
     pub object_serial_number: i32,
@@ -36,8 +36,8 @@ impl FWeakObjectPtr
     }
 }
 
-#[derive(Debug, Clone)]
 #[repr(C)]
+#[derive(Debug, Clone, Copy)]
 pub struct TSharedRef<T> {
     pub object: *mut T,
     pub reference_controller: *mut FReferenceControllerBase,
