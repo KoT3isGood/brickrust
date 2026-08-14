@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, LitStr, ItemFn, Token };
-use syn::parse::{Parse, ParseStream};
+use syn::{parse_macro_input, LitStr };
 
 fn signature(input: LitStr) -> (Vec<u8>, Vec<bool>)
 {

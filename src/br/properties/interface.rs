@@ -14,6 +14,7 @@ pub struct IBrickPropertyInterfaceVTable
 }
 
 #[repr(C)]
+#[derive(Debug, Clone)]
 pub struct IBrickPropertyInterface
 {
     pub vtable: *mut usize,

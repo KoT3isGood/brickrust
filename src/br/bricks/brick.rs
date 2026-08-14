@@ -1,7 +1,27 @@
 
+use crate::br::vehicle::brickconnection::UBrickConnection;
 use crate::ue::coreuobject::*;
+use crate::ue::fmath::*;
+use crate::ue::tarray::TArray;
+use crate::ue::tshared::*;
+use crate::ue::uclass::*;
 use crate::br::properties::interface::IBrickPropertyInterface;
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct FBrickTickFunction
+{
+    pub TickInterval: f32,
+    pub flags: u8,
+    pub LastTickTime: f32,
+    pub Target: *mut UBrick,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct FBrickDamage
+{
+    pub Data: u8,
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -50,6 +70,7 @@ pub struct UBrickVTable
     pub ShouldSpawnCollisionEffects: unsafe extern "C" fn( brick: *mut UBrick ),
     pub SpawnCollisionEffects: unsafe extern "C" fn( brick: *mut UBrick ),
     pub OnCalculateMassProperties: unsafe extern "C" fn( brick: *mut UBrick ),
+
     pub CalcMassPropertiesFromShapes: unsafe extern "C" fn( brick: *mut UBrick ),
     pub GetVolumeScale: unsafe extern "C" fn( brick: *mut UBrick ),
     pub GetBrickEditorVolumeScale: unsafe extern "C" fn( brick: *mut UBrick ),
@@ -137,10 +158,34 @@ pub struct UBrickVTable
     pub IsBrickMaterialSupported: unsafe extern "C" fn( brick: *mut UBrick, mat: *mut () ) -> u8,
 }
 
+#[repr(C)]
+#[derive(Debug, Clone)]
 pub struct UBrick
 {
     pub uobject: UObject,
     pub property_interface: IBrickPropertyInterface,
+    pub StaticInfoClass: *mut UClass,
+    pub EditorObjectID: u16,
+    pub EditorParams: *mut (),
+    pub flags: u8,
+    pub SpawnLocation: FVector,
+    pub SpawnRotation: FRotator,
+    pub Components: TArray<TSharedRef<()>>,
+    pub RootComponent: TSharedPtr<FWeakObjectPtr>,
+    pub Connections: TArray<*mut UBrickConnection>,
+    pub BrickPartRoot: *mut UBrick,
+    pub BrickClusterRoot: *mut UBrick,
+    pub PartRootParams: *mut (),
+    pub BrickDamage: FBrickDamage,
+    pub FireTime: f32,
+    pub NumBurnIntervalsRemaining: u8,
+    pub ReplicationKey: u16,
+    pub flags2: u16,
+    pub PrimaryBrickTick: FBrickTickFunction,
+    pub BrickMaterial: *mut (),
+    pub BrickColor: FColor,
+    pub BrickPattern: *mut (),
+    pub bGenerateLift: bool,
 }
 
 //uclass_game!(UBrick, BrickRigs);

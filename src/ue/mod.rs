@@ -19,6 +19,7 @@ pub mod utils;
 pub mod blueprint;
 pub mod gameplay;
 
+use brickworks::br_print;
 use brickworks::patterns::*;
 use brickworks::hookmgr;
 use brickrust_macros::sig;
@@ -93,9 +94,6 @@ unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, res
     let func_name = (*(*stack).node).ustruct.ufield.uobject.name_private;
 
     use super::blueprint::BlueprintFunction;
-    /*
-     * Todo: we can do better using hashmaps
-     * */
     for f in inventory::iter::<BlueprintFunction>
     {
         let fn_fname = FName::search_str(f.function_name);
@@ -117,7 +115,7 @@ unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, res
         {
             continue;
         }
-        (f.function)(obj, stack, result);
+        (f.function)(obj, &mut *stack, result);
         return;
     }
     (ProcessInternal_hook.unwrap())(obj, stack, result)
@@ -125,6 +123,7 @@ unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, res
 use core::ptr::read_unaligned;
 
 use crate::hook_post_engine_init;
+use crate::ue::fstring::FString;
 
 unsafe fn engine_load()
 {
@@ -162,7 +161,7 @@ pub(crate) unsafe fn init_signatures()
     let sig = lookup("UObject::StaticLoadObject", sig!("48 33 c4 48 89 85 80 02 00 00 0f b6 85 10 03 00 00")).sub(0x23);
     StaticLoadObject_ptr = Some(transmute(sig));
 
-    let sig = lookup("UClass::FindFunctionByName", sig!(" 8b 81 38 01 00 00 45 8b f0 48 8b da 48 8b e9")).sub(0xD);
+    let sig = lookup("UClass::FindFunctionByName", sig!("8b 81 38 01 00 00 45 8b f0 48 8b da 48 8b e9")).sub(0xD);
     UClass_FindFunctionByName_ptr = Some(transmute(sig));
 
     let sig = lookup("UEngine::Init",sig!("48 8d 6c 24 d9 48 81 ec 00 01 00 00 4c 8b f1")).sub(0x10);

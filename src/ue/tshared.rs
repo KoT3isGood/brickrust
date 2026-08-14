@@ -1,5 +1,5 @@
 
-use crate::ue::fmalloc;
+use crate::ue::{coreuobject::GObjects, fmalloc};
 
 #[derive(Debug)]
 #[repr(C)]
@@ -20,6 +20,20 @@ pub struct TSharedPtr<T> {
 pub struct TWeakPtr<T> {
     pub object: *mut T,
     pub reference_controller: *mut FReferenceControllerBase,
+}
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+pub struct FWeakObjectPtr {
+    pub object_index: i32,
+    pub object_serial_number: i32,
+}
+
+impl FWeakObjectPtr
+{
+    pub unsafe fn unwrap<T>(&self) -> *mut T
+    {
+        (*GObjects().array.Get(self.object_index)).object as *mut T
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -51,5 +65,9 @@ impl<T> TSharedRef<T>
             object: core::ptr::null_mut(),
             reference_controller: fmalloc::malloc(size_of::<FReferenceControllerBase>()) as *mut FReferenceControllerBase,
         }
+    }
+    pub unsafe fn unwrap(&self) -> *mut T
+    {
+        return self.object;
     }
 }

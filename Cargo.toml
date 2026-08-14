@@ -49,3 +49,7 @@ crate-type = ["dylib"]
 [[example]]
 name = "function_tests"
 crate-type = ["dylib"]
+
+[[example]]
+name = "better_crashes"
+crate-type = ["dylib"]

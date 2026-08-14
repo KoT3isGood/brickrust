@@ -15,11 +15,36 @@ pub struct TArray<T> {
     pub max: i32,
 }
 
+pub struct TArrayCounter<T>
+{
+    pub data: *mut T,
+    pub idx: i32,
+    pub max: i32,
+}
+
+impl <T: Copy> Iterator for TArrayCounter<T>
+{
+    type Item = T;
+    fn next(&mut self) -> Option<T> {
+        if self.idx >= self.max
+        {
+            return None;
+        }
+        let item = unsafe { *self.data.add(self.idx as usize) };
+        self.idx+=1;
+        return Some(item)
+    }
+}
+
 impl<T: Clone> TArray<T>
 {
     pub unsafe fn new() -> TArray<T>
     {
         TArray { data: core::ptr::null_mut(), num: 0, max: 0}
+    }
+    pub unsafe fn iter(&self) -> TArrayCounter<T>
+    {
+        return TArrayCounter { data: self.data, idx: 0, max: self.num }
     }
     pub unsafe fn with_size( num: i32 ) -> TArray<T>
     {
@@ -62,6 +87,9 @@ impl<T: Clone> TArray<T>
     pub unsafe fn free( &mut self )
     {
         fmalloc::free(self.data as *mut ());
+        self.data = core::ptr::null_mut();
+        self.num = 0;
+        self.max = 0;
     }
 }
 

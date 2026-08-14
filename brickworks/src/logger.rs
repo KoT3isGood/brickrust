@@ -13,7 +13,7 @@ static mut LOGGER: *mut () = core::ptr::null_mut();
 
 pub(crate) unsafe fn init()
 {
-    LOGGER = fopen(b"brickworks.txt\0".as_ptr(), b"w\0".as_ptr());
+    LOGGER = fopen(b"brickworks.txt\0".as_ptr(), b"wb\0".as_ptr());
 }
 
 pub(crate) unsafe fn deinit()

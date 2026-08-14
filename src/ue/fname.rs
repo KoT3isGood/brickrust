@@ -63,11 +63,23 @@ unsafe extern "C"
     pub fn memcmp( l: *const u8, r: *const u8, c: usize ) -> i32;
 }
 
-const BLOCK_SIZE: usize = 4 * 1 << 16;
-
+const BLOCK_SIZE: usize = 2 * 1 << 16;
 
 impl FName
 {
+    pub unsafe fn equals_str(&self, str: &'static str) -> bool
+    {
+        let (ptr, len) = self.as_sptr();
+        if len as usize != str.len() { return false }
+        for i in 0..len as usize
+        {
+            if *ptr.add(i) != str.as_bytes()[i]
+            {
+                return false;
+            }
+        }
+        return true;
+    }
     pub unsafe fn as_sptr(&self) -> (*const u8, i16)
     {
         let entry = (*gnames()).get_entry(self.comparison_index);
@@ -88,9 +100,22 @@ impl FName
             if len == 0 { return None; }
             let len = len as usize;
 
+            let binarylen = if (*entry).key & 0x1 != 0 { len*2 } else {len};
+            if it.add(binarylen) > end
+            {
+                break;
+            }
+
+            let binarylen = binarylen+2;
+            if (*entry).key & 0x1 != 0
+            {
+                it = it.add(binarylen);
+                it = it.add(it.align_offset(2));
+                continue;
+            }
+
             if len != s.len() { 
-                if (*entry).key & 0x1 != 0 { it = it.add(2).add((len as usize) * 2); } 
-                else { it = it.add(2).add(len); }
+                it = it.add(binarylen);
                 it = it.add(it.align_offset(2));
                 continue 
             }
@@ -99,8 +124,7 @@ impl FName
                 let idx = (it.offset_from(start) as usize / 2) as u32;
                 return Some(FName { comparison_index: idx, number: 0 })
             }
-            if (*entry).key & 0x1 != 0 { it = it.add(2).add((len as usize) * 2); } 
-            else { it = it.add(2).add(len); }
+            it = it.add(binarylen);
             it = it.add(it.align_offset(2));
         }
         None

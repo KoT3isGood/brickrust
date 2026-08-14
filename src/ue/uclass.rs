@@ -50,6 +50,22 @@ pub struct UStruct {
 #[derive(Debug, Copy, Clone)]
 pub struct UClass {
     pub ustruct: UStruct,
+    pub ClassConstructor: usize,
+    pub ClassVTableHelperCtorCaller: usize,
+    pub ClassAddReferencedObjects: usize,
+    pub flags: u32,
+    pub ClassFlags1: u64,
+    pub ClassFlags2: u64,
+    pub ClassFlags3: u64,
+    pub ClassCastFlags:u64,
+    pub ClassWithin: *mut UClass,
+    pub ClassGeneratedBy: *mut UObject,
+    pub ClassConfigName: FName,
+    pub NetFields: TArray<*mut UField>,
+    pub FirstOwnedClassRep: i32,
+    pub ClassDefaultObject: *mut UObject,
+    pub SparseClassData: *mut (),
+    pub SparseClassDataStruct: *mut (),
 }
 
 impl UClass
@@ -57,6 +73,7 @@ impl UClass
     pub unsafe fn FindFunctionByName(&self, name: &'static str, inherit: bool ) -> *mut UFunction
     {
         let n = FName::search_str(name);
+        use crate::BrickRust_print;
         (UClass_FindFunctionByName_ptr.unwrap())(self, n, inherit as u32)
     }
 

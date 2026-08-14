@@ -1,20 +1,32 @@
 
 use brickworks::{br_print, set_module_name};
 use inventory::*;
-use super::coreuobject::fnProcessInternal;
+use super::coreuobject::*;
+use super::FFrame;
 set_module_name!(b"blueprints\0");
 
 pub struct BlueprintFunction
 {
     pub class: Option<&'static str>,
     pub function_name: &'static str,
-    pub function: fnProcessInternal,
+    pub function: unsafe fn(obj: *mut UObject, stack: &mut FFrame, result: *mut ()),
 }
 
 inventory::collect!(BlueprintFunction);
 
 ///
 /// Creates function overrides in blueprints
+///
+/// ```
+/// bp_function(my_function_name |obj, stack, result| 
+/// {
+///     struct InputParams {
+///         /* input parameters you specify in blueprint*/
+///         pub str: FString
+///     }
+///     let params = stack.get_input_params()  as *mut InputParams;
+/// });
+/// ```
 ///
 #[macro_export]
 macro_rules! bp_function {
@@ -25,7 +37,7 @@ macro_rules! bp_function {
         use inventory::*;
 
         #[allow(non_snake_case)]
-        unsafe extern "C" fn $name($obj: *mut UObject, $stack: *mut FFrame, $result: *mut ()) $body
+        unsafe fn $name($obj: *mut UObject, $stack: &mut FFrame, $result: *mut ()) $body
             inventory::submit! {
                 BlueprintFunction
                 {
@@ -42,7 +54,7 @@ macro_rules! bp_function {
         use inventory::*;
 
         #[allow(non_snake_case)]
-        unsafe extern "C" fn $name($obj: *mut UObject, $stack: *mut FFrame, $result: *mut ()) $body
+        unsafe fn $name($obj: *mut UObject, $stack: &mut FFrame, $result: *mut ()) $body
         inventory::submit! {
             BlueprintFunction
             {
