@@ -20,8 +20,8 @@ members = [ "macros", "brickworks", "xinput_proxy" ]
 
 [dependencies]
 bitflags= "2.13.1"
-brickrust_macros = { version = "0.0.1", path = "macros" }
-brickworks = { version = "0.0.1", path = "brickworks" }
+brickrust_macros = { version = "0.0.2", path = "macros" }
+brickworks = { version = "0.0.2", path = "brickworks" }
 min_hook_rs = "2.2.1"
 iced-x86 = "1.21.0"
 inventory = "0.3.24"

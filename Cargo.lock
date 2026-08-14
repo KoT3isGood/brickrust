@@ -23,7 +23,7 @@ dependencies = [
 
 [[package]]
 name = "brickrust_macros"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -32,7 +32,7 @@ dependencies = [
 
 [[package]]
 name = "brickworks"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "brickrust_macros",
  "libloading",
