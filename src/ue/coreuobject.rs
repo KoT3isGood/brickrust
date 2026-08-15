@@ -301,6 +301,21 @@ impl UObject
         false
     }
 
+    pub unsafe fn IsA_FName(&self, s: FName) -> bool
+    {
+        let mut cls = self.class_private;
+        loop 
+        {
+            if (*cls).ustruct.ufield.uobject.name_private.comparison_index == s.comparison_index 
+            {
+                return true;
+            }
+
+            cls = (*cls).ustruct.super_struct as *const UClass;
+            if cls.is_null() { break; }
+        }
+        false
+    }
     pub unsafe fn IsA(&self, s: &'static str) -> bool
     {
         let trimmed = &s[1..];

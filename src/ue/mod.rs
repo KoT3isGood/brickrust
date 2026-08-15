@@ -96,7 +96,7 @@ unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, res
     use super::blueprint::BlueprintFunction;
     for f in inventory::iter::<BlueprintFunction>
     {
-        let fn_fname = FName::search_str(f.function_name);
+        let fn_fname = FName::new(f.function_name);
 
         match f.class
         {

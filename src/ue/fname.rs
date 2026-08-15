@@ -1,6 +1,6 @@
 
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ptr::slice_from_raw_parts};
 
 pub static mut GNAMES_PTR: *mut FNamePool = core::ptr::null_mut();
 pub unsafe fn gnames() -> *mut FNamePool
@@ -9,7 +9,9 @@ pub unsafe fn gnames() -> *mut FNamePool
 }
 
 use brickworks::{br_print, set_module_name};
-set_module_name!("fname");
+
+use crate::ue::fmalloc::{self, malloc};
+set_module_name!(b"fname\0");
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -61,6 +63,7 @@ pub struct FName {
 unsafe extern "C"
 {
     pub fn memcmp( l: *const u8, r: *const u8, c: usize ) -> i32;
+    pub fn memcpy( l: *const u8, r: *const u8, c: usize ) -> i32;
 }
 
 const BLOCK_SIZE: usize = 2 * 1 << 16;
@@ -105,6 +108,9 @@ impl FName
             {
                 break;
             }
+            let slc = slice_from_raw_parts((*entry).name.as_ptr(), len);
+            let st = str::from_utf8_unchecked(&*slc);
+            //br_print!("{} {} {}", len, binarylen, st);
 
             let binarylen = binarylen+2;
             if (*entry).key & 0x1 != 0
@@ -184,6 +190,51 @@ impl FName
             return *name;
         }
         *name.unwrap()
+    }
+
+    pub unsafe fn write_new_str( s: &'static str )
+    {
+        assert!(s.len()<1024);
+
+        let blocks = (*gnames()).allocator.blocks;
+        let current_block = (*gnames()).allocator.current_block as usize;
+        let cursor = (*gnames()).allocator.current_block_cursor;
+        let name = blocks[current_block].add(cursor as usize);
+        *(name as *mut u16) = (s.len() as u16) << 6;
+        core::ptr::copy_nonoverlapping(s.as_ptr(), name.add(2) as *mut u8, s.len());
+        (*gnames()).allocator.current_block_cursor += 2 + s.len() as i32;
+
+    }
+
+    pub unsafe fn allocate_new_str( s: &'static str ) -> FName
+    {
+        assert!(s.len()<1024);
+
+        let cursor = (*gnames()).allocator.current_block_cursor;
+        let end = cursor as usize + s.len() + 2; 
+        let blocks = &mut (*gnames()).allocator.blocks;
+        if end > BLOCK_SIZE
+        {
+            (*gnames()).allocator.current_block_cursor = 0;
+            (*gnames()).allocator.current_block += 1;
+            let current_block = (*gnames()).allocator.current_block as usize;
+            blocks[current_block] = fmalloc::malloc(BLOCK_SIZE) as *const u8;
+
+        }
+        let current_block = (*gnames()).allocator.current_block as u32;
+        let cursor = (*gnames()).allocator.current_block_cursor as u32;
+        FName::write_new_str(s);
+        return FName { comparison_index: (current_block<<16)+cursor/2, number: 0 };
+    }
+
+    pub unsafe fn new( s: &'static str ) -> FName
+    {
+        let name = FName::search_str(s);
+        if name.comparison_index == NAME_NONE.comparison_index
+        {
+            return FName::allocate_new_str(s);
+        }
+        name
     }
 }
 
