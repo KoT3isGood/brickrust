@@ -1,5 +1,6 @@
 #![allow(non_upper_case_globals)]
 pub mod coreuobject;
+pub mod farrayserializer;
 pub mod ffield;
 pub mod fframe;
 pub mod fmalloc;
@@ -12,6 +13,7 @@ pub mod ftagcontainer;
 pub mod tarray;
 pub mod toptional;
 pub mod tpair;
+pub mod tmap;
 pub mod farchive;
 pub mod tshared;
 pub mod uclass;

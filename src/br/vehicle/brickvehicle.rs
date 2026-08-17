@@ -1,3 +1,5 @@
+use bitflags::bitflags;
+
 use crate::br::bricks::brick::UBrick;
 use crate::ue::fmath::*;
 use crate::ue::tarray::TArray;
@@ -18,6 +20,32 @@ pub struct FViewTargetZoomCache
     pub InputRate: f32,
     pub TargetRatio: f32,
     pub CurrentRatio: f32,
+}
+
+bitflags! {
+    #[repr(C)]
+    #[derive(Debug, Clone, Copy)]
+    pub struct ABrickVehicleFlags1: u32
+    {
+        /// Whether initial collision should be avoided after constructing the vehicle
+        const bAvoidCollisionOnConstruct = 0x1;
+        /// Whether the physics are locally authoritative
+        const bHasPhysicsAuthority = 0x2;
+        /// Flags set to true if a value has been replicated
+        const bRestartTransformReplicated = 0x4;
+        /// Used to track changes through replication
+        const bSavedCanBeDamaged = 0x8;
+        /// Whether we are currently in the UnPossessed function
+        const bIsInUnPossessed = 0x10;
+    }
+    #[repr(C)]
+    #[derive(Debug, Clone, Copy)]
+    pub struct ABrickVehicleFlags2: u8
+    {
+        const bIsHeatSeekingTarget = 0x1;
+        const bIsInteracting = 0x2;
+        const bInitializedViewRotation = 0x4;
+    }
 }
 
 #[repr(C)]
@@ -137,20 +165,30 @@ pub struct ABrickVehicle
     pub _a109: usize,
     pub _a110: usize,
     pub _a111: usize,
-    pub _a112: usize,
-    pub _a113: usize,
+    pub _a112: f32,
+    pub VehicleConstructionState: u8,
+    pub ConstructionBrickCounter: i32,
+    pub ConstructionStartTime: f32,
+    pub flags1: ABrickVehicleFlags1,
+    /// Vehicle bounding box (relative to the root), cached for better performance (and because it can be modified by axles)
     pub VehicleBoundsMin: FVector,
+    /// Vehicle bounding box (relative to the root), cached for better performance (and because it can be modified by axles)
     pub VehicleBoundsMax: FVector,
+    /// Spawn price of this vehicle
     pub VehiclePrice: f32,
     pub LastRepairTime: f32,
     pub LastMovementReplicationTime: f32,
-    pub MaxSteeringAngle: f32,
     pub SpawningPlayerState: usize,
     pub OriginalSpawnPoint: usize,
     pub DownloadReplicator: usize,
+    /// List of all connections between bricks, active and broken
     pub BrickConnections: TArray<()>,
+    /// List of dynamic connections created by this vehicle
     pub DynamicBrickConnections: TArray<()>,
+    /// List of dynamic connections involved this vehicle but owned by another one
     pub ExternalBrickConnections: TArray<()>,
+    /// Connections that are waiting to be broken, done at once for better performance
+    /// NOTE: The array can contain duplicates, it doesn't matter for the UpdateBrickConnections function
     pub BrickConnectionsToBreak: TArray<()>,
     pub _a130: usize,
     pub _a131: usize,
@@ -228,19 +266,30 @@ pub struct ABrickVehicle
     pub _a203: usize,
     pub FuelLevelRatio: f32,
     pub RepFuelLevelRatio: u16,
+    /// Total fuel capacity
     pub FuelCapacity: f32,
+    /// Whether the vehicle is currently pinned in place
     pub PinMode: EVehiclePinMode,
+    /// The unique teams of all passengers
+    /// NOTE: This has to be replicated since characters can be culled when far away, which means the client would not know about their team affiliation
     pub PassenegerTeamIDs: TArray<()>,	
     pub FuelTanksToExplodeOnClient: TArray<()>,	
+    /// Root brick of the vehicle, usually the driver seat
     pub RootBrick: *mut UBrick,
+    /// Driver seat of the vehicle
     pub DriverSeat:  *mut UBrick,
+    /// List of all cluster root bricks
     pub ClusterRootBricks: TArray<()>,	
     pub ClusterRootBricksWithFluidDynamics: TArray<()>,	
     pub ClusterRootBricksOnFire: TArray<()>,	
     pub ReplicatedBricks: TArray<()>,	
+    /// List of seats on this vehicle
     pub SeatBricks: TArray<()>,	
+    /// List of camera bricks
     pub CameraBricks: TArray<()>,	
+    /// List of all guns
     pub GunBricks: TArray<()>,	
+    pub RepMoveClusters: TArray<()>,	
     pub _a204: usize,
     pub _a205: usize,
     pub _a206: usize,
@@ -254,24 +303,7 @@ pub struct ABrickVehicle
     pub _a214: usize,
     pub _a215: usize,
     pub _a216: usize,
-    pub _a217: usize,
-    pub _a218: usize,
-    pub _a219: usize,
-    pub _a220: usize,
-    pub _a221: usize,
-    pub _a222: usize,
-    pub _a223: usize,
-    pub _a224: usize,
-    pub _a225: usize,
-    pub _a226: usize,
-    pub _a227: usize,
-    pub _a228: usize,
-    pub _a229: usize,
-    pub _a230: usize,
-    pub VehicleComponent: *mut (),
-    /*
-    pub RepMoveClusters: TArray<()>,	
-    pub flags: u8,	
+    pub flags2: ABrickVehicleFlags2,	
     pub PreInteractionViewRotation: FRotator,
     pub ViewRefLocation: FVector,
     pub ViewRefRotation: FQuat,
@@ -281,5 +313,9 @@ pub struct ABrickVehicle
     pub ConnectionsReplicationKey: u16,
     pub FirearmsReplicationKey: u16,
     pub InventoryLoadout: TArray<()>,
-    */
+    pub VehicleComponent: *mut (),
+    pub HandlingAudioComponent: *mut (),
+    pub HUDIconComponent: *mut (),
+    pub FirearmComponents: *mut TArray<()>,
+    pub InventoryComponent: *mut (),
 }

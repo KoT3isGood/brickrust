@@ -1,0 +1,42 @@
+#![allow(nonstandard_style)]
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub enum EVehicleInputAxis
+{
+	None,
+	Steering,
+	Throttle,
+	Brake,
+	Pitch,
+	ViewPitch,
+	ViewYaw,
+	SteeringAlt,
+	ThrottleAlt,
+	BrakeAlt,
+	PitchAlt,
+	ViewPitchAlt,
+	ViewYawAlt,
+	Horn,
+	Action1,
+	Action2,
+	Action3,
+	Action4,
+	Action5,
+	Action6,
+	Action7,
+	Action8,
+	DisableSteering,
+	InvertSteering,
+	HandBrake,
+	OperationMode,
+	Headlight,
+	Beacon,
+	WarningLight,
+	Taillight,
+	BrakeLight,
+	ReversingLight,
+	AlwaysOn,
+	Custom,
+	Max,
+}

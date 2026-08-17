@@ -77,5 +77,11 @@ pub struct UBrickConnection
     pub Params: FBrickConnectionParams,
     pub BreakingDamage: f32,
     pub flags: UBrickConnectionFlags,
+}
 
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct UPhysicsConstraintConnection
+{
+    pub connection: UBrickConnection,
 }

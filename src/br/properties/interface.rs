@@ -2,7 +2,7 @@
 use crate::br::properties::reflection::FBrickPropertyReflection;
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct IBrickPropertyInterfaceVTable
 {
     pub _a_0: unsafe extern "C" fn( brick: *const IBrickPropertyInterface ),
@@ -14,8 +14,8 @@ pub struct IBrickPropertyInterfaceVTable
 }
 
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct IBrickPropertyInterface
 {
-    pub vtable: *mut usize,
+    pub vtable: *mut IBrickPropertyInterfaceVTable,
 }

@@ -1,4 +1,6 @@
 
+use bitflags::bitflags;
+
 use crate::br::vehicle::brickconnection::UBrickConnection;
 use crate::ue::coreuobject::*;
 use crate::ue::fmath::*;
@@ -72,7 +74,7 @@ pub struct UBrickVTable
     pub OnCalculateMassProperties: unsafe extern "C" fn( brick: *mut UBrick ),
 
     pub CalcMassPropertiesFromShapes: unsafe extern "C" fn( brick: *mut UBrick ),
-    pub GetVolumeScale: unsafe extern "C" fn( brick: *mut UBrick ),
+    pub GetVolumeScale: unsafe extern "C" fn( brick: *mut UBrick ) -> f32,
     pub GetBrickEditorVolumeScale: unsafe extern "C" fn( brick: *mut UBrick ),
     pub ShouldShowGenerateLiftProperty: unsafe extern "C" fn( brick: *mut UBrick ),
     pub GetFluidDynamicElements: unsafe extern "C" fn( brick: *mut UBrick ),
@@ -158,33 +160,113 @@ pub struct UBrickVTable
     pub IsBrickMaterialSupported: unsafe extern "C" fn( brick: *mut UBrick, mat: *mut () ) -> u8,
 }
 
+bitflags! {
+
+    #[repr(C)]
+    #[derive(Debug, Clone, Copy)]
+    pub struct UBrickFlags1: u8
+    {
+	/// Whether the object has been fully initialized, including post initialization
+	const bIsInitialized = 0x1;
+	/// Whether the object is being initialized right now
+	const bIsBeingInitialized = 0x2;
+	/// Whether the object is being uninitialized right now
+	const bIsBeingUninitialized = 0x4;
+        /* from EBrickEditorObjectContext */
+	const bIsEditor = 0x8;
+	const bIsThumbnailRender = 0x10;
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Clone, Copy)]
+    pub struct UBrickFlags2: u16
+    {
+	/// Used during UpdateBrickConnections to indicate if the brick's part or cluster root has already been updated
+	const bHasPartRootBeenUpdated = 0x1;
+	const bHasClusterRootBeenUpdated = 0x2;
+	const bHasRepMoveClusterBeenUpdated = 0x4;
+	const bIsRepMovePart = 0x8;
+	/// Used during UpdateBrickConnections to indicate if children have been added or removed to the part root or cluster root
+	const bPartRootChildrenAddedOrRemoved = 0x10;
+	const bClusterRootChildrenAddedOrRemoved = 0x20;
+	/// Used during UpdateBrickConnections to indicate whether the cluster contains any RC bricks
+	const bClusterContainsRCBrick = 0x40;
+	/// Whether there are any fluid dynamic elements on this cluster
+	const bClusterHasFluidDynamicElements = 0x80;
+	/// Whether the part root should currently simulate physics
+	const bPartRootSimulatePhysics = 0x100;
+	/// Whether the brick is currently connected to the root brick
+	const bIsConnectedToRoot = 0x200;
+	/// Whether the brick is currently controllable, i.e. connected to the root brick or an RC brick
+	const bIsControllable = 0x400;
+	/// Whether the brick is connected to any fuel tanks with fuel
+	const bHasAnyFuel = 0x800;
+	/// Cached flag indicating if the brick has a lift surface
+	const bHasFluidDynamicLiftSurface = 0x1000;
+	/// Whether we are currently creating the physics state
+	const bIsCreatingPhysicsState = 0x2000;
+	/// Whether the vehicle and brick are being repaired
+	const bIsRepairing = 0x4000;
+	/// Whether replication is currently enabled
+	const bIsReplicated = 0x8000;
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Clone, Copy)]
+    pub struct UBrickFlags3: u16
+    {
+	// Whether Blueprint events should be called
+	const bEnableBlueprintEvents = 0x1;
+    }
+}
+
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct UBrick
 {
     pub uobject: UObject,
     pub property_interface: IBrickPropertyInterface,
+    // The static info this object has been instantiated from
     pub StaticInfoClass: *mut UClass,
+    // The unique ID of this object, this is only updated and used before saving
     pub EditorObjectID: u16,
+    // Editor only params
     pub EditorParams: *mut (),
-    pub flags: u8,
+    // Whether the object has been fully initialized, including post initialization
+    pub flags: UBrickFlags1,
+    // Relative spawn location
     pub SpawnLocation: FVector,
+    // Relative spawn rotation
     pub SpawnRotation: FRotator,
+    // Components that are being used on this object
     pub Components: TArray<TSharedRef<()>>,
+    // The root component that manages attachment, collision etc
     pub RootComponent: TSharedPtr<FWeakObjectPtr>,
+    /// All connections that involve this brick
     pub Connections: TArray<*mut UBrickConnection>,
+    /// Current root of the part this brick belongs to
     pub BrickPartRoot: *mut UBrick,
+    /// Current root of the cluster this brick belongs to
     pub BrickClusterRoot: *mut UBrick,
+    /// Struct used on part roots to store additional data
     pub PartRootParams: *mut (),
+    /// Replicated damage information
     pub BrickDamage: FBrickDamage,
+    /// While on fire: Time remaining until the brick spreads fire or stops burning
+    /// While not on fire: Next time the brick is allowed to catch fire (after being extinguished)
     pub FireTime: f32,
+    /// Number of burn intervals the brick yet has to do
     pub NumBurnIntervalsRemaining: u8,
+    /// Key used to keep track of replicated changes
     pub ReplicationKey: u16,
-    pub flags2: u16,
-    pub PrimaryBrickTick: FBrickTickFunction,
+    /// Physical material used for this Brick
     pub BrickMaterial: *mut (),
+    pub _a1: u64,
+    /// Custom color of the brick
     pub BrickColor: FColor,
+    /// Texture pattern for this brick
     pub BrickPattern: *mut (),
+    /// Whether this brick should influence fluid dynamics
     pub bGenerateLift: bool,
 }
 
