@@ -71,6 +71,19 @@ pub fn lookup( note: &'static str, sign: Signature ) -> *const u8
     }
     sig
 }
+pub enum LookupMode
+{
+    SignatureStart,
+    Offset32,
+    Direct64,
+}
+
+/*
+pub fn lookup2( note: &'static str, sign: Signature, offset: usize, mode: LookupMode ) -> *const u8
+{
+
+}
+*/
 
 #[cfg(test)]
 mod test

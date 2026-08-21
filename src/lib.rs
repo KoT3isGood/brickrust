@@ -85,6 +85,7 @@ set_module_name!(b"brickrust\0");
 pub mod br;
 pub mod ue;
 pub mod utils;
+pub mod really_scary;
 mod brickrust;
 
 
@@ -130,6 +131,21 @@ use std::panic;
 use crate::ue::blueprint;
 use crate::ue::tarray::TArray;
 
+pub unsafe fn autobacktrace()
+{    
+    let bt = backtrace::Backtrace::new();
+    for frame in bt.frames() {
+        let ip = frame.ip();
+        br_print!("{:?}:", ip);
+
+        for symbol in frame.symbols() {
+            if let Some(name) = symbol.name() {
+                br_print!("  {}", name);
+            }
+        }
+    }
+}
+
 /**
  * Sets up all the signatures for engine interactions.
  * You cannot call any engine and game functions before calling this.
@@ -154,15 +170,21 @@ pub unsafe fn init()
 pub unsafe fn hook_construct_uobject( f: unsafe fn( obj: *mut UObjectBase ) )
 {
     hookmgr::add_subhook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
-
 }
+
 pub unsafe fn hook_post_engine_init( f: unsafe fn() )
 {
     hookmgr::add_subhook(UEngine_Init_ptr.unwrap() as *const (), f as *const ());
 }
+
 pub unsafe fn hook_post_load_map( f: unsafe fn() )
 {
     hookmgr::add_subhook(UEngine_LoadMap_ptr.unwrap() as *const (), f as *const ());
+}
+
+pub unsafe fn hook_class_iter( f: unsafe fn( obj: *mut UObjectBase ) )
+{
+    hookmgr::add_subhook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
 }
 
 /**

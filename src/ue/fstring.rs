@@ -12,7 +12,7 @@ unsafe extern "C"
 }
 
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct FString
 {
     pub data: TArray<u16>,

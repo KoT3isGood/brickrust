@@ -33,7 +33,7 @@ pub struct UStruct {
     pub super_struct: *const UStruct,
     pub children: *const UField,
     pub child_properties: *const FField,
-    pub properties_size: i32,
+    pub properties_size: u32,
     pub min_alignment: i32,
     pub script: TArray<u8>,
     pub property_link: *const FProperty,
@@ -43,6 +43,34 @@ pub struct UStruct {
     pub script_and_property_object_references: TArray<*const UObject>,
     pub unresolved_script_properties: *const (), //TODO pub TArray<TTuple<TFieldPath<FField>,int>,TSizedDefaultAllocator<32> >*
     pub unversioned_schema: *const (),           //TODO const FUnversionedStructSchema*
+}
+impl UStruct
+{
+    pub unsafe fn InheritsFrom_fname(&self, name: FName) -> bool
+    {
+        let mut cls = self.super_struct;
+        if self.ufield.uobject.name_private.comparison_index == name.comparison_index
+        {
+            return true;
+        }
+        loop 
+        {
+            if cls.is_null() { break; }
+            if (*cls).ufield.uobject.name_private.comparison_index == name.comparison_index
+            {
+                return true;
+            }
+
+            cls = (*cls).super_struct;
+        }
+        false
+    }
+    pub unsafe fn InheritsFrom_str(&self, name: &'static str) -> bool
+    {
+        let fname = FName::search_str(name);
+        self.InheritsFrom_fname(fname)
+
+    }
 }
 
 

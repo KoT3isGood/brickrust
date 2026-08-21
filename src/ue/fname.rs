@@ -62,6 +62,42 @@ pub struct FName {
 
 unsafe extern "C"
 {
+    fn wctomb( mbchar: *mut u8, wchar: u16 );
+    fn mbtowc( wchar: *mut u16, mbchar: *const u8, count: usize );
+}
+use core::fmt;
+use core::fmt::*;
+impl fmt::Display for FName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        unsafe
+        {
+            let (ptr, len, w) = self.as_sptr2();
+            if w
+            {
+                for i in 0..len
+                {
+                    let wc = *(ptr as *mut u16).add(i as usize);
+                    let mut c: u8 = b'0';
+                    wctomb(&mut c, wc);
+                    let _ = f.write_char(c as char);
+                }
+            }
+            else
+            {
+                for i in 0..len
+                {
+                    let c = *ptr.add(i as usize);
+                    let _ = f.write_char(c as char);
+                }
+            }
+            Ok(())
+
+        }
+    }
+}
+
+unsafe extern "C"
+{
     pub fn memcmp( l: *const u8, r: *const u8, c: usize ) -> i32;
     pub fn memcpy( l: *const u8, r: *const u8, c: usize ) -> i32;
 }
@@ -89,7 +125,12 @@ impl FName
         let len = (*entry).key >> 6;
         return ((*entry).name.as_ptr(), len);
     }
-
+    pub unsafe fn as_sptr2(&self) -> (*const u8, i16, bool)
+    {
+        let entry = (*gnames()).get_entry(self.comparison_index);
+        let len = (*entry).key >> 6;
+        return ((*entry).name.as_ptr(), len, (*entry).key & 0x1 != 0);
+    }
     unsafe fn block_search_str( s: &'static str, block: *const u8, size: usize ) -> Option<FName>
     {
         let mut it = block;

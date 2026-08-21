@@ -3,8 +3,9 @@
 
 pub mod brickeditor;
 pub mod bricks;
-pub mod properties;
 pub mod game;
+pub mod projectiles;
+pub mod properties;
 pub mod utils;
 pub mod statics;
 pub mod modhook;

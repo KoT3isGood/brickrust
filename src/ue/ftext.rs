@@ -1,12 +1,27 @@
+use brickworks::br_print;
+use crate::BrickRust_print;
+
+use crate::ue::fstring::FString;
 use crate::ue::tshared::TSharedRef;
 
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct FText
 {
     pub data: TSharedRef<()>,
     pub flags: u32,
+    pub unk: u32,
 }
+
+impl FText
+{
+    pub unsafe fn from_fstring( s: *const FString) -> FText
+    {
+        (Conv_StringToText.unwrap())(s)
+    }
+}
+
+pub(crate) static mut Conv_StringToText: Option<unsafe extern "C" fn (a: *const FString) -> FText> = None;
 
 unsafe extern "C"
 {

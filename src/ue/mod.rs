@@ -126,6 +126,7 @@ use core::ptr::read_unaligned;
 
 use crate::hook_post_engine_init;
 use crate::ue::fstring::FString;
+use crate::ue::ftext::Conv_StringToText;
 
 unsafe fn engine_load()
 {
@@ -146,10 +147,13 @@ pub(crate) unsafe fn init_signatures()
     gameplay::init_signatures();
 
     let sig = lookup("GObjects",sig!("0F AF EA 41 FF C9"));
-    GOBJECTS_PTR = sig.add(12).add((read_unaligned(sig.add(8) as *mut u32)) as usize) as *mut _;
+    GOBJECTS_PTR = sig.add(12).add((read_unaligned(sig.add(8) as *mut i32)) as usize) as *mut _;
 
     let sig = lookup("GNames",sig!("74 09 48 8D 15 ? ? ? ? EB 16"));
-    GNAMES_PTR = sig.add(9).add(read_unaligned(sig.add(5) as *mut u32) as usize) as *mut _;
+    GNAMES_PTR = sig.add(9).add(read_unaligned(sig.add(5) as *mut i32) as usize) as *mut _;
+    
+    let sig = lookup("Conv_StringToText",sig!("74 41 48 8d 54 24 20 48 8b c8 e8 ?? ?? ?? ?? 48 8b d0 48 8d 4c 24 30"));
+    Conv_StringToText = Some(transmute(sig.add(28).add(read_unaligned(sig.add(24) as *mut i32) as usize)));
 
     let sig = lookup("FMemory::Realloc",sig!("48 8b fa 48 85 c9 75 0c")).sub(0x1C);
     fmalloc::Realloc = Some(transmute(sig));

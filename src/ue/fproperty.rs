@@ -24,7 +24,7 @@ pub struct FPropertyVTable
     pub LinkInternal: unsafe extern "C" fn(),
     pub ConvertFromType: unsafe extern "C" fn(),
     pub Identical: unsafe extern "C" fn(),
-    pub SerializeItem: unsafe extern "C" fn(),
+    pub SerializeItem: unsafe extern "C" fn(prop: *mut FProperty),
     pub NetSerializeItem: unsafe extern "C" fn(),
     pub SupportsNetSharedSerialization: unsafe extern "C" fn(),
     pub ExportTextItem: unsafe extern "C" fn(),
@@ -32,6 +32,18 @@ pub struct FPropertyVTable
     pub CopyValuesInternal: unsafe extern "C" fn(),
     pub GetValueTypeHashInternal: unsafe extern "C" fn(),
     pub CopySingleValueToScriptVM: unsafe extern "C" fn(),
+    pub CopyCompleteValueToScriptVM: unsafe extern "C" fn(),
+    pub CopySingleValueFromScriptVM: unsafe extern "C" fn(),
+    pub CopyCompleteValueFromScriptVM: unsafe extern "C" fn(),
+    pub ClearValueInternal: unsafe extern "C" fn(),
+    pub DestroyValueInternal: unsafe extern "C" fn(),
+    pub InitializeValueInternal: unsafe extern "C" fn(),
+    pub GetID: unsafe extern "C" fn(),
+    pub InstanceSubobjects: unsafe extern "C" fn(),
+    pub GetMinAlignment: unsafe extern "C" fn(),
+    pub ContainsObjectReference: unsafe extern "C" fn(),
+    pub EmitReferenceInfo: unsafe extern "C" fn(),
+    pub SameType: unsafe extern "C" fn( prop: *mut FProperty, other: *mut FProperty) -> bool,
 }
 
 #[repr(C)]
@@ -51,6 +63,8 @@ pub struct FProperty {
     pub destructor_link_next: *mut FProperty,
     pub post_construct_link_next: *mut FProperty,
 }
+
+
 
 #[allow(non_upper_case_globals)]
 static mut FPropertyVTable_ptr: *const FPropertyVTable = core::ptr::null();

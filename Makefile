@@ -37,7 +37,7 @@ install: build
 	cp "/usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll" "$(DIR)" 
 	cp "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll" "$(DIR)" 
 	mkdir -p "$(DIR)/brickworks"
-	cp "$(TARGET)/examples/better_crashes.dll" "$(DIR)/brickworks" 
+	cp "$(TARGET)/examples/custom_brick_properties.dll" "$(DIR)/brickworks" 
 
 
 else

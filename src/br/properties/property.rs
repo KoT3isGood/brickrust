@@ -175,7 +175,7 @@ pub struct FBrickProperty
     pub name: FName,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct FBrickPropertyInstance
 {
     pub property: TSharedRef<FBrickProperty>,

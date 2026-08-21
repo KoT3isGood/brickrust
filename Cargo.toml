@@ -26,7 +26,7 @@ min_hook_rs = "2.2.1"
 iced-x86 = "1.21.0"
 inventory = "0.3.24"
 wchar = "0.11.1"
-
+backtrace = "0.3"
 
 [profile.dev]
 panic = "abort"

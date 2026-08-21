@@ -64,7 +64,7 @@ pub struct FChunkedFixedUObjectArray
 }
 impl FChunkedFixedUObjectArray
 {
-    pub unsafe fn Count(&self) -> i32
+    pub fn Count(&self) -> i32
     {
         self.num_elements
     }
@@ -87,6 +87,34 @@ pub struct FUObjectArray
     max_not_considered_gc: i32,
     open_disregard: i32,
     pub array: FChunkedFixedUObjectArray
+}
+
+pub struct FUObjectArrayIter
+{
+    pub objs: *const FChunkedFixedUObjectArray,
+    pub idx: i32,
+}
+impl Iterator for FUObjectArrayIter
+{
+    type Item = *mut UObject;
+    fn next(&mut self) -> Option<*mut UObject> {
+        if self.idx >= unsafe { (*self.objs).Count() }
+        {
+            return None;
+        }
+        let item = unsafe { (*(*self.objs).Get(self.idx)).object };
+        self.idx+=1;
+        return Some(item)
+    }
+}
+
+impl FUObjectArray
+{
+    pub fn iter(&self) -> FUObjectArrayIter
+    {
+        return FUObjectArrayIter { objs: &self.array, idx: 0 };
+    }
+
 }
 
 pub(crate) static mut GOBJECTS_PTR: *mut FUObjectArray = core::ptr::null_mut();
@@ -333,6 +361,11 @@ impl UObject
         }
         false
     }
+    pub unsafe fn IsA_str(&self, s: &'static str) -> bool
+    {
+        let fname = FName::search_str(s);
+        self.IsA_FName(fname)
+    }
     pub unsafe fn IsOuterA(&self, s: &'static str) -> bool
     {
         let trimmed = &s[1..];
@@ -350,4 +383,24 @@ impl UObject
         }
         false
     }
+    pub unsafe fn IsA_and_name_str(&self, s: &'static str) -> bool
+    {
+        let fname = FName::search_str(s);
+        if self.name_private.comparison_index == fname.comparison_index
+        {
+            return true;
+        }
+        self.IsA_FName(fname)
+    }
+    pub unsafe fn dump_class(&self)
+    {
+        let mut cls = self.class_private;
+        loop 
+        {
+            br_print!("{}", (*cls).ustruct.ufield.uobject.name_private);
+            cls = (*cls).ustruct.super_struct as *const UClass;
+            if cls.is_null() { break; }
+        }
+    }
+
 }
