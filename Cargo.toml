@@ -6,7 +6,7 @@ description = "A library which allows Brick Rigs modding"
 readme = "readme.md"
 repository = "https://github.com/KoT3isGood/brickrust"
 # first is brick rigs version
-version = "1.11.3+brickrust-001"
+version = "1.11.3+brickrust-002"
 publish = true
 
 [features]
