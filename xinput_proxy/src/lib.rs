@@ -23,6 +23,7 @@ unsafe extern "system"
 {
     fn LoadLibraryA( lib: LPCSTR ) -> HMODULE;
     fn GetProcAddress( lib: HMODULE, proc: LPCSTR ) -> usize; 
+    fn OutputDebugStringA( s: LPCSTR ) -> usize; 
 }
 
 static mut XInputEnableFn: usize = 0;
@@ -53,7 +54,7 @@ unsafe extern "system" fn DllMain(
             
             
             /* we don't care about the result, it is a cdylib */
-            LoadLibraryA(b"brickworks.dll".as_ptr());
+            LoadLibraryA(b"brickworks.dll\0".as_ptr());
         }
         DLL_PROCESS_DETACH => {
 

@@ -23,16 +23,19 @@ doc:
 
 ifeq ($(dev),true)
 build:
-	cargo build $(CARGO_TARGET) --examples || true
+	cargo build $(CARGO_TARGET) --examples
 else
 build:
-	cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu --examples || true
+	cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu
 endif
 
 ifdef DIR
 
-install: build
-	cp "$(TARGET)/deps/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
+xinput: 
+	cd xinput_proxy && cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu
+
+install: xinput build
+	cp "$(TARGET_RELEASE)/deps/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	cp "$(TARGET)/deps/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	cp "/usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll" "$(DIR)" 
 	cp "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll" "$(DIR)" 

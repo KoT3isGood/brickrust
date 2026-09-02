@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "brickworks"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "brickrust_macros",
  "libloading",
@@ -234,4 +234,4 @@ dependencies = [
 
 [[package]]
 name = "xinput1_3"
-version = "0.0.1"
+version = "0.0.2"

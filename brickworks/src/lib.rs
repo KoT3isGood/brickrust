@@ -27,13 +27,40 @@
 //! libwinpthread-1.dll
 //! ```
 //!
-//! # Functions provided to a mod
+//! # Mod prerequisites
 //!
-//! Required functions for a mod:
-//! - `mod_info` -- returns mod metadata
-//! - `mod_init` -- initializes mod
-//! See
+//! We have few requirements for a mod to get loaded. All the functions below must follow C ABI.
 //!
+//! ## Loading paths
+//! - `brickworks/*.dll`
+//! - `BrickRigs/Mods/*/mod.dll`
+//! 
+//! ## Mandatory functions
+//! ```
+//! #[unsafe(no_mangle)]
+//! unsafe extern "C" fn mod_info() -> ModInfo
+//! {
+//!     ...
+//! }
+//!
+//! #[unsafe(no_mangle)]
+//! unsafe extern "C" fn mod_init()
+//! {
+//!     ...
+//! }
+//! ```
+//! 
+//!
+//! ## Optional functions
+//! ```
+//! #[unsafe(no_mangle)]
+//! unsafe extern "C" fn mod_deinit()
+//! {
+//!     ...
+//! }
+//! ```
+//!
+
 
 #![allow(static_mut_refs)]
 pub mod win32;
@@ -78,15 +105,27 @@ unsafe extern "C" fn brickworks_init() {
     for m in MODS.as_mut().unwrap().iter()
     {
         use modinfo::ModInfo;
-        let f_ = m.1.get(b"mod_info\0");
-        if f_.is_err()
+        let mod_info = m.1.get(b"mod_info\0");
+        if mod_info.is_err()
         {
-            panic!("mod_info: {}", f_.err().unwrap())
+            br_print!("Failed to find symbol \"mod_info\"");
+            br_print!("Please check for the presence of \"mod_info\"");
+            br_print!("Skipped: {}", m.0 );
+            continue;
         }
-        let f: Symbol<extern "C" fn () -> ModInfo> = f_.unwrap();
-        let modinfo = f();
 
-        br_print!("{}: ENABLED",m.0);
+        let mod_init = m.1.get(b"mod_init\0");
+        if mod_init.is_err()
+        {
+            br_print!("Failed to find symbol \"mod_init\"");
+            br_print!("Please check for the presence of \"mod_info\"");
+            br_print!("Skipped: {}", m.0 );
+            continue;
+        }
+        let mod_info: Symbol<extern "C" fn () -> ModInfo> = mod_info.unwrap();
+        let mod_init: Symbol<extern "C" fn ()> = mod_init.unwrap();
+        let modinfo = mod_info();
+
         let name = CStr::from_ptr(modinfo.name as *const c_char);
         let description = CStr::from_ptr(modinfo.description as *const c_char);
         let version = CStr::from_ptr(modinfo.version as *const c_char);
@@ -99,12 +138,6 @@ unsafe extern "C" fn brickworks_init() {
         br_print!("   Author: {}", author.to_str().unwrap() );
 
         /* because pointers are per-dll we need to init them */
-        let mod_init_ = m.1.get(b"mod_init\0");
-        if mod_init_.is_err()
-        {
-            panic!("mod_init: {}", mod_init_.err().unwrap())
-        }
-        let mod_init: Symbol<extern "C" fn ()> = mod_init_.unwrap();
         mod_init();
         br_print!("Mod initialized: {}", name.to_str().unwrap() );
     }
@@ -169,6 +202,10 @@ unsafe fn load_mod( entry: &PathBuf)
         {
             br_print!("{}: DISABLED",filenamestr.trim_start_matches("_"));
             return;
+        }
+        else 
+        {
+            br_print!("{}: ENABLED",filenamestr);
         }
         let lib = Library::new(entry.as_path());
         if lib.is_err()

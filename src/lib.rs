@@ -94,30 +94,7 @@ use brickworks::set_module_name;
 use brickworks::hookmgr;
 
 use ue::coreuobject::*;
-use iced_x86::{Decoder, DecoderOptions, Formatter, Instruction, NasmFormatter};
 use ue::*;
-
-pub(crate) unsafe fn disassemble( data: *const u8 )
-{
-    let bytes = core::slice::from_raw_parts(data, 200);
-    let mut decoder =
-        Decoder::with_ip(64, bytes, data as u64, DecoderOptions::NONE);
-    let mut formatter = NasmFormatter::new();
-    formatter.options_mut().set_digit_separator("`");
-    formatter.options_mut().set_first_operand_char_index(10);
-    
-    let mut output = String::new();
-
-    let mut instruction = Instruction::default();
-
-    while decoder.can_decode() {
-        decoder.decode_out(&mut instruction);
-
-        output.clear();
-        formatter.format(&instruction, &mut output);
-        br_print!("{}", output);
-    }
-}
 
 unsafe fn init_signatures()
 {
