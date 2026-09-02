@@ -42,7 +42,7 @@ unsafe extern "C" fn is_rc_brick( brick: *mut UBrick ) -> bool
     true
 }
 
-pub unsafe fn ue_object_init( obj: *mut UObjectBase )
+pub unsafe fn ue_object_init( _params: FStaticConstructObjectParameters, obj: *mut UObjectBase )
 {
     if (*obj).IsA("UBrick")
     {

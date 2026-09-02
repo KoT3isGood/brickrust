@@ -11,6 +11,7 @@ pub mod statics;
 pub mod modhook;
 pub mod vehicle;
 pub mod items;
+pub mod assetmgr;
 
 use core::mem::transmute;
 use brickrust_macros::sig;

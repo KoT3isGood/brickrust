@@ -1,6 +1,7 @@
 #![allow(nonstandard_style)]
 
 
+use bitflags::bitflags;
 use brickworks::br_print;
 use brickworks::set_module_name;
 set_module_name!("coreuobject");
@@ -12,7 +13,7 @@ use super::fname::*;
 use super::uclass::*;
 
 pub(crate) static mut StaticConstructObject_Internal: Option<StaticConstructObject_t> = None;
-pub(crate) type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters) -> *mut UObjectBase;
+pub(crate) type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters ) -> *mut UObjectBase;
 
 pub(crate) type fnProcessInternal = unsafe extern "C" fn(obj: *mut UObject, stack: *mut FFrame, result: *mut ());
 pub(crate) static mut ProcessInternal_ptr: Option<fnProcessInternal> = None;
@@ -21,6 +22,7 @@ pub(crate) static mut ProcessInternal_hook: Option<fnProcessInternal> = None;
 pub(crate) type fnStaticLoadObject = unsafe extern "C" fn
 ( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObject;
 pub(crate) static mut StaticLoadObject_ptr: Option<fnStaticLoadObject> = None;
+pub(crate) static mut StaticLoadObject_hook: Option<fnStaticLoadObject> = None;
 
 pub(crate) static mut UCLASS: *mut UClass = core::ptr::null_mut();
 pub unsafe fn default_uclass() -> *mut UClass
@@ -131,7 +133,7 @@ pub struct FStaticConstructObjectParameters
     pub class: *const UClass,
     pub outer: *const UObjectBase,
     pub name: FName,
-    pub set_flags: u32,
+    pub set_flags: EObjectFlags,
     pub internal_flags: u32,
     pub copy_transients: bool,
     pub archetype: bool,
@@ -140,39 +142,42 @@ pub struct FStaticConstructObjectParameters
     pub external_package: *const (),
 }
 
-#[repr(C)]
-#[derive(Debug, Copy , Clone)]
-pub enum EObjectFlags {
-    RF_NoFlags = 0x0000,
-    RF_Public = 0x0001,
-    RF_Standalone = 0x0002,
-    RF_MarkAsNative = 0x0004,
-    RF_Transactional = 0x0008,
-    RF_ClassDefaultObject = 0x0010,
-    RF_ArchetypeObject = 0x0020,
-    RF_Transient = 0x0040,
-    RF_MarkAsRootSet = 0x0080,
-    RF_TagGarbageTemp = 0x0100,
-    RF_NeedInitialization = 0x0200,
-    RF_NeedLoad = 0x0400,
-    RF_KeepForCooker = 0x0800,
-    RF_NeedPostLoad = 0x1000,
-    RF_NeedPostLoadSubobjects = 0x2000,
-    RF_NewerVersionExists = 0x4000,
-    RF_BeginDestroyed = 0x8000,
-    RF_FinishDestroyed = 0x00010000,
-    RF_BeingRegenerated = 0x00020000,
-    RF_DefaultSubObject = 0x00040000,
-    RF_WasLoaded = 0x00080000,
-    RF_TextExportTransient = 0x00100000,
-    RF_LoadCompleted = 0x00200000,
-    RF_InheritableComponentTemplate = 0x00400000,
-    RF_DuplicateTransient = 0x00800000,
-    RF_StrongRefOnFrame = 0x01000000,
-    RF_NonPIEDuplicateTransient = 0x02000000,
-    RF_Dynamic = 0x04000000,
-    RF_WillBeLoaded = 0x08000000,
+bitflags! {
+    #[repr(C)]
+    #[derive(Debug, Copy , Clone)]
+    pub struct EObjectFlags: u32 {
+        const RF_NoFlags = 0x0000;
+        const RF_Public = 0x0001;
+        const RF_Standalone = 0x0002;
+        const RF_MarkAsNative = 0x0004;
+        const RF_Transactional = 0x0008;
+        const RF_ClassDefaultObject = 0x0010;
+        const RF_ArchetypeObject = 0x0020;
+        const RF_Transient = 0x0040;
+        const RF_MarkAsRootSet = 0x0080;
+        const RF_TagGarbageTemp = 0x0100;
+        const RF_NeedInitialization = 0x0200;
+        const RF_NeedLoad = 0x0400;
+        const RF_KeepForCooker = 0x0800;
+        const RF_NeedPostLoad = 0x1000;
+        const RF_NeedPostLoadSubobjects = 0x2000;
+        const RF_NewerVersionExists = 0x4000;
+        const RF_BeginDestroyed = 0x8000;
+        const RF_FinishDestroyed = 0x00010000;
+        const RF_BeingRegenerated = 0x00020000;
+        const RF_DefaultSubObject = 0x00040000;
+        const RF_WasLoaded = 0x00080000;
+        const RF_TextExportTransient = 0x00100000;
+        const RF_LoadCompleted = 0x00200000;
+        const RF_InheritableComponentTemplate = 0x00400000;
+        const RF_DuplicateTransient = 0x00800000;
+        const RF_StrongRefOnFrame = 0x01000000;
+        const RF_NonPIEDuplicateTransient = 0x02000000;
+        const RF_Dynamic = 0x04000000;
+        const RF_WillBeLoaded = 0x08000000;
+    }
 }
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct UObjectVTable
@@ -399,6 +404,16 @@ impl UObject
         {
             br_print!("{}", (*cls).ustruct.ufield.uobject.name_private);
             cls = (*cls).ustruct.super_struct as *const UClass;
+            if cls.is_null() { break; }
+        }
+    }
+    pub unsafe fn dump_outer(&self)
+    {
+        let mut cls = self.outer_private;
+        loop 
+        {
+            br_print!("{}", (*cls).name_private);
+            cls = (*cls).outer_private;
             if cls.is_null() { break; }
         }
     }

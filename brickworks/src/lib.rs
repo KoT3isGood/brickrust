@@ -6,7 +6,14 @@
 //! This is required folder structure for windows
 //! ```txt
 //! BrickRigs.exe
+//! ...
 //! BrickRigs/
+//!     Mods/
+//!         YourMod/
+//!             Content/
+//!                 ...
+//!             Yourmod.uplugin
+//!             mod.dll
 //!     Binaries/
 //!         Win64/
 //!              BrickRigsSteam-Win64-Shipping.exe
@@ -43,9 +50,10 @@ use std::collections::HashMap;
 use std::ffi::OsString;
 use core::ffi::CStr;
 use core::ffi::c_char;
+use std::path::PathBuf;
 
 
-static mut MODS: Option<HashMap<OsString, Library>> = None;
+static mut MODS: Option<HashMap<String, Library>> = None;
 
 /**
  * Scans for mods and initializes them.
@@ -78,7 +86,7 @@ unsafe extern "C" fn brickworks_init() {
         let f: Symbol<extern "C" fn () -> ModInfo> = f_.unwrap();
         let modinfo = f();
 
-        br_print!("{}: ENABLED",m.0.display());
+        br_print!("{}: ENABLED",m.0);
         let name = CStr::from_ptr(modinfo.name as *const c_char);
         let description = CStr::from_ptr(modinfo.description as *const c_char);
         let version = CStr::from_ptr(modinfo.version as *const c_char);
@@ -120,30 +128,54 @@ unsafe extern "C" fn BrickRust_print( str: *const u8 )
 unsafe fn load_mods()
 {
     let mods = fs::read_dir("brickworks");
-    if mods.is_err() {
-        br_print!("Failed to find \"brickworks\" folder: {}. It must be in root with BrickRigs.exe. ", mods.err().unwrap()); 
-        return;
-    }
-    let entries = mods.unwrap();
-
-    for entry in entries
+    if let Ok(mods) = mods
     {
-        if entry.is_err() { continue }
-        let entry = entry.unwrap();
+        let entries = mods;
+        for entry in entries
+        {
+            if entry.is_err() { continue }
+            let entry = entry.unwrap();
+            load_mod(&entry.path());
+        }
+    }
+
+    let brmods = fs::read_dir("BrickRigs/Mods");
+    if let Ok(mods) = brmods
+    {
+        let entries = mods;
+        for entry in entries
+        {
+            if entry.is_err() { continue }
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if path.is_dir()
+            {
+                let dll_path = path.join("mod.dll");
+                if dll_path.exists()
+                {
+                    load_mod(&dll_path);
+                }
+            }
+        }
+    }
+
+}
+
+unsafe fn load_mod( entry: &PathBuf)
+{
         let filename = entry.file_name();
-        let filenamestr = filename.to_str().unwrap();
+        let filenamestr = filename.unwrap().to_str().unwrap();
         if filenamestr.starts_with("_")
         {
             br_print!("{}: DISABLED",filenamestr.trim_start_matches("_"));
-            continue;
+            return;
         }
-        let lib = Library::new(entry.path());
+        let lib = Library::new(entry.as_path());
         if lib.is_err()
         {
-            br_print!("Failed to load {}: {} ({})", entry.path().display(), lib.err().unwrap(), io::Error::last_os_error()); 
-            continue;
+            br_print!("Failed to load {}: {} ({})", entry.as_path().display(), lib.err().unwrap(), io::Error::last_os_error()); 
+            return;
         }
 
-        MODS.as_mut().unwrap().insert(filename, lib.unwrap());
-    }
+        MODS.as_mut().unwrap().insert(entry.to_str().unwrap().to_string(), lib.unwrap());
 }

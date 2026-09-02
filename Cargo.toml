@@ -6,14 +6,16 @@ description = "A library which allows Brick Rigs modding"
 readme = "readme.md"
 repository = "https://github.com/KoT3isGood/brickrust"
 # first is brick rigs version
-version = "0.0.2+br1.11.3"
+version = "0.0.3+br1.11.5"
 publish = true
 
 [features]
-default=["brick_rigs_bricks_1_11"]
-brick_rigs_bricks_1_11=[]
-brick_rigs_1_11=["brick_rigs_bricks_1_11"]
+default=["br_1_11"]
+br_bricks_1_10=[]
+br_1_11=["br_bricks_1_10"]
+br_1_10_7=["br_bricks_1_10"]
 process_internal_debug=[]
+brmk_1_10_7=["br_1_10_7"]
 
 [workspace]
 members = [ "macros", "brickworks", "xinput_proxy" ]
@@ -21,9 +23,8 @@ members = [ "macros", "brickworks", "xinput_proxy" ]
 [dependencies]
 bitflags= "2.13.1"
 brickrust_macros = { version = "0.0.2", path = "macros" }
-brickworks = { version = "0.0.2", path = "brickworks" }
+brickworks = { version = "0.0.3", path = "brickworks" }
 min_hook_rs = "2.2.1"
-iced-x86 = "1.21.0"
 inventory = "0.3.24"
 wchar = "0.11.1"
 backtrace = "0.3"

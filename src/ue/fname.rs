@@ -149,9 +149,6 @@ impl FName
             {
                 break;
             }
-            let slc = slice_from_raw_parts((*entry).name.as_ptr(), len);
-            let st = str::from_utf8_unchecked(&*slc);
-            //br_print!("{} {} {}", len, binarylen, st);
 
             let binarylen = binarylen+2;
             if (*entry).key & 0x1 != 0
@@ -166,6 +163,8 @@ impl FName
                 it = it.add(it.align_offset(2));
                 continue 
             }
+            let slc = slice_from_raw_parts((*entry).name.as_ptr(), len);
+            let st = str::from_utf8_unchecked(&*slc);
             if memcmp(s.as_ptr(), (*entry).name.as_ptr(), len) == 0
             {
                 let idx = (it.offset_from(start) as usize / 2) as u32;
@@ -243,7 +242,8 @@ impl FName
         let name = blocks[current_block].add(cursor as usize);
         *(name as *mut u16) = (s.len() as u16) << 6;
         core::ptr::copy_nonoverlapping(s.as_ptr(), name.add(2) as *mut u8, s.len());
-        (*gnames()).allocator.current_block_cursor += 2 + s.len() as i32;
+        let aligned_len = if s.len() % 2 == 1 { s.len() + 1 } else {s.len()};
+        (*gnames()).allocator.current_block_cursor += 2 + aligned_len as i32;
 
     }
 

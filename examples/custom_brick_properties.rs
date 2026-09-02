@@ -130,7 +130,7 @@ pub unsafe extern "C" fn custom_reflect_properties( iface: *const IBrickProperty
     }
     else
     {
-        //(*brickdata).edit_info._a02 = (*(*(*reflection).edit_infos.data).key.object)._a02;
+        (*brickdata).edit_info._a02 = (*(*(*reflection).edit_infos.data).key.object)._a02;
         let o = (*brickdata).edit_info._a02.unwrap() as *mut UObject;
         let mut r = TSharedRef::make_shared_no_alloc();
         r.object = &mut (*brickdata).edit_info;
@@ -141,6 +141,7 @@ pub unsafe extern "C" fn custom_reflect_properties( iface: *const IBrickProperty
         };
 
         (*brickdata).edit_info.instance = instance;
+        (*brickdata).edit_info.container_objects = (*reflection).container_objects.clone_arr();
 
         (*reflection).edit_infos.Add(pair);
     }
@@ -184,7 +185,7 @@ unsafe extern "C" fn SameType( prop: *mut FProperty, other: *mut FProperty) -> b
     (*prop).field.class_private == (*other).field.class_private
 }
 
-unsafe fn ue_object_init( obj: *mut UObjectBase )
+unsafe fn ue_object_init( _params: FStaticConstructObjectParameters, obj: *mut UObjectBase )
 {
     //br_print!("{}", (*obj).name_private);
 
@@ -222,9 +223,9 @@ unsafe fn ue_object_init( obj: *mut UObjectBase )
         (*data).edit_info.name = FText::from_fstring(&name);
         name.free();
 
-        //let mut name = FString::from_str("My property pretty description banana\0");
-        //(*data).edit_info.description = FText::from_fstring(&name);
-        //name.free();
+        let mut name = FString::from_str("My property pretty description banana\0");
+        (*data).edit_info.description = FText::from_fstring(&name);
+        name.free();
 
         (*data).edit_info.is_enabled = true;
         //(*data).edit_info.list_items = 1;

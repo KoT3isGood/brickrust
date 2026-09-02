@@ -130,6 +130,7 @@ use std::panic;
 
 use crate::ue::blueprint;
 use crate::ue::tarray::TArray;
+use crate::ue::uclass::UClass;
 
 pub unsafe fn autobacktrace()
 {    
@@ -167,9 +168,13 @@ pub unsafe fn init()
     blueprint::init();
 }
 
-pub unsafe fn hook_construct_uobject( f: unsafe fn( obj: *mut UObjectBase ) )
+pub unsafe fn hook_construct_uobject( f: unsafe fn( params: FStaticConstructObjectParameters, obj: *mut UObjectBase ) )
 {
     hookmgr::add_subhook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
+}
+pub unsafe fn hook_load_uobject( f: unsafe fn( obj: *mut UObjectBase, class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32 ) )
+{
+    hookmgr::add_subhook(StaticLoadObject_ptr.unwrap() as *const (), f as *const ());
 }
 
 pub unsafe fn hook_post_engine_init( f: unsafe fn() )
@@ -180,11 +185,6 @@ pub unsafe fn hook_post_engine_init( f: unsafe fn() )
 pub unsafe fn hook_post_load_map( f: unsafe fn() )
 {
     hookmgr::add_subhook(UEngine_LoadMap_ptr.unwrap() as *const (), f as *const ());
-}
-
-pub unsafe fn hook_class_iter( f: unsafe fn( obj: *mut UObjectBase ) )
-{
-    hookmgr::add_subhook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
 }
 
 /**

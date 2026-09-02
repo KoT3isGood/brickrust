@@ -20,6 +20,8 @@ pub mod uclass;
 pub mod utils;
 pub mod blueprint;
 pub mod gameplay;
+pub mod gcobject;
+pub mod delegate;
 
 use brickworks::br_print;
 use brickworks::patterns::*;
@@ -30,6 +32,7 @@ use coreuobject::*;
 use uclass::*;
 use fname::*;
 use core::mem::transmute;
+use std::ops::BitOrAssign;
 use fframe::FFrame;
 set_module_name!(b"ue\0");
 
@@ -41,16 +44,30 @@ static mut UEngine_LoadMap_hook: Option<unsafe extern "C" fn (a: *mut (), b: *mu
 
 static mut StaticConstructObject_Internal_hook: Option<StaticConstructObject_t> = None;
 
-unsafe extern "C" fn static_construct( params: FStaticConstructObjectParameters) -> *mut UObjectBase
+unsafe extern "C" fn static_load( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObjectBase
+{
+    let uobject = (StaticLoadObject_hook.unwrap())(class, in_outer, inname, filename, flags, reconciliation);
+    let (subhooks, count) = hookmgr::get_subhooks(
+        transmute(StaticLoadObject_ptr.unwrap())
+    );
+    let subhooks: *const unsafe fn( obj: *mut UObjectBase, class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32 ) = transmute(subhooks);
+    for i in 0..count
+    {
+        (*subhooks.add(i))(uobject, class, in_outer, inname, filename, flags);
+    }
+    return uobject;
+}
+
+unsafe extern "C" fn static_construct( params: FStaticConstructObjectParameters ) -> *mut UObjectBase
 {
     let uobject = (StaticConstructObject_Internal_hook.unwrap())(params);
     let (subhooks, count) = hookmgr::get_subhooks(
         transmute(StaticConstructObject_Internal.unwrap())
     );
-    let subhooks: *const unsafe fn( obj: *mut UObjectBase ) = transmute(subhooks);
+    let subhooks: *const unsafe fn( params: FStaticConstructObjectParameters, obj: *mut UObjectBase ) = transmute(subhooks);
     for i in 0..count
     {
-        (*subhooks.add(i))(uobject);
+        (*subhooks.add(i))(params, uobject);
     }
     return uobject;
 }
@@ -98,7 +115,6 @@ unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, res
     use super::blueprint::BlueprintFunction;
     for f in inventory::iter::<BlueprintFunction>
     {
-        let fn_fname = FName::new(f.function_name);
 
         match f.class
         {
@@ -106,14 +122,13 @@ unsafe extern "C" fn process_internal(obj: *mut UObject, stack: *mut FFrame, res
             }
             Some(c) =>
             {
-                let cls_fname = FName::search_str(c);
-                if cls_fname.comparison_index != obj_name.comparison_index
+                if !obj_name.equals_str(c)
                 {
                     continue;
                 }
             }
         }
-        if fn_fname.comparison_index != func_name.comparison_index
+        if !func_name.equals_str(f.function_name)
         {
             continue;
         }
@@ -164,8 +179,6 @@ pub(crate) unsafe fn init_signatures()
     let sig = lookup("FMemory::Free",sig!("48 85 c9 74 2e 53"));
     fmalloc::Free = Some(transmute(sig));
 
-    let sig = lookup("UObject::StaticLoadObject", sig!("48 33 c4 48 89 85 80 02 00 00 0f b6 85 10 03 00 00")).sub(0x23);
-    StaticLoadObject_ptr = Some(transmute(sig));
 
     let sig = lookup("UClass::FindFunctionByName", sig!("8b 81 38 01 00 00 45 8b f0 48 8b da 48 8b e9")).sub(0xD);
     UClass_FindFunctionByName_ptr = Some(transmute(sig));
@@ -202,6 +215,17 @@ pub(crate) unsafe fn init_signatures()
             hookmgr::hook(
                 StaticConstructObject_Internal.unwrap() as *const _, 
                 static_construct as *const _
+            )
+        )
+    );
+
+    let sig = lookup("UObject::StaticLoadObject", sig!("48 33 c4 48 89 85 80 02 00 00 0f b6 85 10 03 00 00")).sub(0x23);
+    StaticLoadObject_ptr = Some(transmute(sig));
+    StaticLoadObject_hook = Some(
+        transmute(
+            hookmgr::hook(
+                StaticLoadObject_ptr.unwrap() as *const _, 
+                static_load as *const _
             )
         )
     );

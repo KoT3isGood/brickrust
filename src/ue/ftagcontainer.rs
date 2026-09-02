@@ -1,10 +1,10 @@
-use crate::ue::tarray::TArray;
+use crate::ue::{fname::FName, tarray::TArray};
 
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct FGameplayTagContainer
 {
-    gameplay_tags: TArray<()>, 
-    parent_tags: TArray<()>,
+    pub gameplay_tags: TArray<FName>, 
+    pub parent_tags: TArray<FName>,
 }

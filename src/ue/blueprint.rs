@@ -47,20 +47,37 @@ macro_rules! bp_function {
                 }
         }
     };
-    ($class: expr, $name:ident |$obj:ident, $stack:ident, $result:ident| $body:block) => {
+    ($name:expr, |$obj:ident, $stack:ident, $result:ident| $body:block) => {
         use $crate::ue::fframe::*;
         use $crate::ue::coreuobject::*;
         use $crate::ue::blueprint::*;
         use inventory::*;
 
         #[allow(non_snake_case)]
-        unsafe fn $name($obj: *mut UObject, $stack: &mut FFrame, $result: *mut ()) $body
+        unsafe fn exec($obj: *mut UObject, $stack: &mut FFrame, $result: *mut ()) $body
+            inventory::submit! {
+                BlueprintFunction
+                {
+                    class: None,
+                    function_name: $name,
+                    function: exec,
+                }
+        }
+    };
+    ($class: expr, $name:expr, |$obj:ident, $stack:ident, $result:ident| $body:block) => {
+        use $crate::ue::fframe::*;
+        use $crate::ue::coreuobject::*;
+        use $crate::ue::blueprint::*;
+        use inventory::*;
+
+        #[allow(non_snake_case)]
+        unsafe fn exec($obj: *mut UObject, $stack: &mut FFrame, $result: *mut ()) $body
         inventory::submit! {
             BlueprintFunction
             {
                 class: Some($class),
-                function_name: stringify!($name),
-                function: $name,
+                function_name: $name,
+                function: exec,
             }
         }
     };

@@ -1,7 +1,7 @@
 [package]
 name = "brickworks"
 edition = "2021"
-version = "0.0.2"
+version = "0.0.3"
 license = "MIT"
 description = "Brick Rigs mod loader"
 repository = "https://github.com/KoT3isGood/brickrust"

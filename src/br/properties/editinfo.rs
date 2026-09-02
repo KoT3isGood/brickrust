@@ -31,7 +31,7 @@ pub struct FBrickPropertyEditInfo
     pub description: FText,
     pub idk9: TSharedPtr<()>,
     pub idk10: *mut (),
-    pub _a01: TArray<()>,
+    pub container_objects: TArray<()>,
     pub _a02: FWeakObjectPtr,
     pub is_enabled: bool,
     pub is_read_only: bool,

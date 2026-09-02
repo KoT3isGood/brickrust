@@ -77,7 +77,6 @@ pub enum LookupMode
     Offset32,
     Direct64,
 }
-
 /*
 pub fn lookup2( note: &'static str, sign: Signature, offset: usize, mode: LookupMode ) -> *const u8
 {

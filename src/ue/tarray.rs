@@ -91,5 +91,18 @@ impl<T: Clone> TArray<T>
         self.num = 0;
         self.max = 0;
     }
+    pub unsafe fn clone_arr( &mut self ) -> TArray<T>
+    {
+        let alloc = fmalloc::malloc( size_of::<T>() * self.max as usize ) as *mut T;
+        for i in 0..self.num
+        {
+            *alloc.add(i as usize) = (*self.data.add(i as usize)).clone();
+        }
+        TArray {
+            data: alloc,
+            num: self.num,
+            max: self.max,
+        }
+    }
 }
 
