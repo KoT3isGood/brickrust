@@ -4,7 +4,7 @@
 use bitflags::bitflags;
 use brickworks::br_print;
 use brickworks::set_module_name;
-set_module_name!("coreuobject");
+set_module_name!(b"coreuobject\0");
 
 use crate::ue::fframe::FFrame;
 use crate::ue::fstring::FString;

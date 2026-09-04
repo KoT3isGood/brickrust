@@ -3,7 +3,7 @@ use brickrust::ue::coreuobject::*;
 use brickrust::br::bricks::brick::*;
 use brickrust::utils::vtable::*;
 use brickworks::set_module_name;
-set_module_name!("basic init");
+set_module_name!(b"basic init\0");
 
 #[no_mangle]
 extern "C" fn mod_info() -> ModInfo

@@ -11,11 +11,15 @@ publish = true
 
 [features]
 default=["br_1_11"]
-br_bricks_1_10=[]
-br_1_11=["br_bricks_1_10"]
-br_1_10_7=["br_bricks_1_10"]
-process_internal_debug=[]
-brmk_1_10_7=["br_1_10_7"]
+brmk=["brmk_1_10_7", "brickworks/brmk"]
+
+br_1_11=["br_symbols_1_11"]
+br_1_10_7=["br_symbols_1_10_7"]
+brmk_1_10_7=["brmk_symbols_1_10_7"]
+
+br_symbols_1_11=[]
+br_symbols_1_10_7=[]
+brmk_symbols_1_10_7=[]
 
 [workspace]
 members = [ "macros", "brickworks", "xinput_proxy" ]

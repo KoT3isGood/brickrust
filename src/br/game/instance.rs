@@ -28,10 +28,10 @@ pub unsafe fn GetEnabledModNames( out_names: *mut TArray<FString> )
 
 pub(crate) unsafe fn init_signatures()
 {
-    let sig = lookup("UBrickGameInstance::GetEnabledModNames", sig!("4c 8b 42 68 48 8d 55 ?? 41 ff d0 48 8d 4d ??")).sub(0x32);
+    let sig = lookup2("UBrickGameInstance::GetEnabledModNames", -0x32, LookupMode::SignatureStart, sig!("4c 8b 42 68 48 8d 55 ?? 41 ff d0 48 8d 4d ??"));
     GetEnabledModNames_ptr = Some(transmute(sig));
 
-    let sig = lookup("UBrickGameInstance::GetEnabledModsHash", sig!("45 33 ff 48 8d 4c 24 20 41 8b f7")).sub(0x18);
+    let sig = lookup2("UBrickGameInstance::GetEnabledModsHash", -0x18, LookupMode::SignatureStart, sig!("45 33 ff 48 8d 4c 24 20 41 8b f7"));
     GetEnabledModsHash_ptr = Some(transmute(sig));
 }
 

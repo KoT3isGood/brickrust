@@ -102,9 +102,6 @@ unsafe fn init_signatures()
     br::init_signatures();
 }
 
-use std::backtrace::Backtrace;
-use std::panic;
-
 use crate::ue::blueprint;
 use crate::ue::tarray::TArray;
 use crate::ue::uclass::UClass;
@@ -135,11 +132,6 @@ pub unsafe fn init()
     if INITED { return; }
     INITED = true;
 
-    panic::set_hook(Box::new(|info| {
-        let bt = Backtrace::force_capture();
-        br_print!("Panic: {}", info);
-        br_print!("Backtrace:\n{}", bt);
-    }));
 
     init_signatures();
     blueprint::init();

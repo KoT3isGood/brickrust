@@ -1,7 +1,9 @@
+use std::mem::zeroed;
+
 use crate::{br_print, win32::*};
 use crate::BrickRust_print;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Signature {
     pub bytes: &'static [u8],
     pub mask: &'static [bool],
@@ -49,8 +51,24 @@ pub unsafe fn lookup_data( data: *const u8, data_len: usize, sign: Signature ) -
 pub unsafe fn lookup_unsafe( sign: Signature ) -> *const u8
 {
     let data_len: usize = get_base_size();
-    let data: *const u8 = get_base_address() as *const u8;
+    let data: *const u8 = get_base_address();
     lookup_data(data, data_len, sign)
+}
+
+#[cfg(feature = "brmk")]
+pub unsafe fn lookup_brmk( sign: Signature ) -> *const u8
+{
+    for i in 0..BRMK_DLLS.dll_names.len()
+    {
+        let data = lookup_data(BRMK_DLLS.dll_addresses[i], BRMK_DLLS.dll_sizes[i], sign);
+        if data.is_null()
+        {
+            continue;
+        }
+        return data;
+    }
+
+    return core::ptr::null();
 }
 
 /**
@@ -73,16 +91,41 @@ pub fn lookup( note: &'static str, sign: Signature ) -> *const u8
 }
 pub enum LookupMode
 {
+    /// provided as is
     SignatureStart,
+    /// for relative addressing
     Offset32,
+    /// for direct 64-bit addresses
     Direct64,
 }
-/*
-pub fn lookup2( note: &'static str, sign: Signature, offset: usize, mode: LookupMode ) -> *const u8
-{
 
+pub unsafe fn lookup2( note: &'static str, offset: isize, mode: LookupMode, sign: Signature ) -> *const u8
+{
+    #[cfg(feature = "brmk")]
+    let addr = lookup_brmk(sign);
+    #[cfg(not(feature = "brmk"))]
+    let addr = lookup_unsafe(sign);
+    br_print!("{}: {:p}", note, addr);
+    if addr.is_null()
+    {
+        panic!("Failed to find {}", note)
+    }
+    let addr = addr.offset(offset);
+    match mode
+    {
+        LookupMode::SignatureStart => {
+            return addr.offset(offset);
+        }
+        LookupMode::Offset32 => {
+            let reladdr = (addr as *mut u32).read_unaligned();
+            return addr.add(4).add(reladdr as usize);
+        }
+        LookupMode::Direct64 => {
+            let reladdr = (addr as *mut u64).read_unaligned();
+            return reladdr as *const u8;
+        }
+    }
 }
-*/
 
 #[cfg(test)]
 mod test

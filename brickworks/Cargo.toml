@@ -12,6 +12,9 @@ libloading = "0.9"
 brickrust_macros = { version = "0.0.2", path = "../macros" }
 min_hook_rs = "2.2.1"
 
+[features]
+brmk=[]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

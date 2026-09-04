@@ -78,6 +78,8 @@ use core::ffi::CStr;
 use core::ffi::c_char;
 use std::path::PathBuf;
 
+use std::backtrace::Backtrace;
+use std::panic;
 
 static mut MODS: Option<HashMap<String, Library>> = None;
 
@@ -93,6 +95,11 @@ unsafe extern "C" fn brickworks_init() {
     INITED = true;
 
     logger::init();
+    panic::set_hook(Box::new(|info| {
+        let bt = Backtrace::force_capture();
+        br_print!("Panic: {}", info);
+        br_print!("Backtrace:\n{}", bt);
+    }));
     hookmgr::init();
     MODS = Some(HashMap::new());
 

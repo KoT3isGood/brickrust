@@ -81,3 +81,24 @@ pub unsafe fn get_base_size() -> usize
 {
     BASE_SIZE
 }
+
+#[cfg(feature="brmk")]
+pub (crate) struct BRMKLookupInfo<const N: usize> {
+    pub dll_names: [*const u8; N],
+    pub dll_addresses: [*const u8; N],
+    pub dll_sizes: [usize; N],
+}
+
+#[cfg(feature="brmk")]
+pub (crate) const BRMK_DLLS: BRMKLookupInfo<3> = BRMKLookupInfo
+{
+    dll_names: [
+        b"BrickRigsModKitSteam-BrickRigs.dll\0".as_ptr(),
+        b"BrickRigsModKitSteam-Core.dll\0".as_ptr(),
+        b"BrickRigsModKitSteam-CoreUObject.dll\0".as_ptr(),
+    ],
+    dll_addresses: unsafe { zeroed() },
+    dll_sizes: unsafe { zeroed() },
+};
+
+

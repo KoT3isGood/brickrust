@@ -10,7 +10,7 @@ use super::ffield::*;
 use super::coreuobject::*;
 
 pub(crate) static mut UClass_FindFunctionByName_ptr: Option<unsafe extern "C" fn (cls: *const UClass, name: FName, inherit: u32) -> *mut UFunction> = None;
-set_module_name!("uclass");
+set_module_name!(b"uclass\0");
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
