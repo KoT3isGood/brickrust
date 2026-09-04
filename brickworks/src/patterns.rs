@@ -114,7 +114,7 @@ pub unsafe fn lookup2( note: &'static str, offset: isize, mode: LookupMode, sign
     match mode
     {
         LookupMode::SignatureStart => {
-            return addr.offset(offset);
+            return addr;
         }
         LookupMode::Offset32 => {
             let reladdr = (addr as *mut u32).read_unaligned();

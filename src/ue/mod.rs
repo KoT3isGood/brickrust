@@ -216,7 +216,6 @@ pub(crate) unsafe fn init_signatures()
         )
     );
 
-    /*
     let sig = lookup2("UObject::StaticLoadObject", -0x23, LookupMode::SignatureStart, sig!("48 33 c4 48 89 85 80 02 00 00 0f b6 85 10 03 00 00"));
     StaticLoadObject_ptr = Some(transmute(sig));
     StaticLoadObject_hook = Some(
@@ -227,7 +226,6 @@ pub(crate) unsafe fn init_signatures()
             )
         )
     );
-    */
 
     let sig = lookup2("ProcessLocalScriptFunction", -0x30, LookupMode::SignatureStart, sig!("80 f9 04 74 34 66 66 66 0f 1f 84 00 00 00 00 00 48 ff c0"));
     ProcessInternal_ptr = Some(transmute(sig));
