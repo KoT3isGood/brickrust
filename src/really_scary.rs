@@ -1,9 +1,8 @@
 //! This module provides scary functions that allow to commit actual war crimes in code, such as
 //! making the UClass allocation size larger for putting own variables.
-use crate::ue::fname::FName;
 use crate::ue::uclass::*;
 
-pub unsafe fn uclass_reserve_memory( cls: *mut UClass, bytes: usize, alignment: usize ) -> usize
+pub unsafe fn uclass_reserve_memory( cls: *mut UClass, bytes: usize, _alignment: usize ) -> usize
 {
     let aligned = ((*cls).ustruct.properties_size + 0xf) & 0xFFFFFFF0;
     let new_size = aligned + bytes as u32;

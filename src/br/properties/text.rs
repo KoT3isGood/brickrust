@@ -2,7 +2,7 @@ use super::property::*;
 
 
 #[derive(Debug, Clone, Copy)]
-pub struct FTextBrickPropertyVTable(FBrickPropertyVTable);
+pub struct FTextBrickPropertyVTable(pub FBrickPropertyVTable);
 
 impl FTextBrickPropertyVTable
 {

@@ -317,7 +317,7 @@ impl UObject
 
         name == s
     }
-    pub unsafe fn IsOuterExact(&self, s: &'static str) -> bool
+    pub unsafe fn IsOuterExact(&self, _s: &'static str) -> bool
     {
         let name = self.name_private; 
         let s = FString::from_fname(name);

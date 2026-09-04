@@ -1,7 +1,6 @@
 use bitflags::bitflags;
 
 use crate::br::bricks::brick::UBrick; 
-use crate::br::vehicle::brickconnection::UBrickConnection;
 use crate::br::vehicle::inputchannel::FVehicleInputChannel;
 use crate::ue::tarray::TArray;
 use crate::ue::tshared::{FWeakObjectPtr, TSharedPtr};

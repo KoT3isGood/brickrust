@@ -23,7 +23,6 @@ unsafe extern "system"
 {
     fn LoadLibraryA( lib: LPCSTR ) -> HMODULE;
     fn GetProcAddress( lib: HMODULE, proc: LPCSTR ) -> usize; 
-    fn OutputDebugStringA( s: LPCSTR ) -> usize; 
 }
 
 static mut XInputEnableFn: usize = 0;

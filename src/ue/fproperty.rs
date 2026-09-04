@@ -66,5 +66,5 @@ pub struct FProperty {
 
 
 
-#[allow(non_upper_case_globals)]
-static mut FPropertyVTable_ptr: *const FPropertyVTable = core::ptr::null();
+//#[allow(non_upper_case_globals)]
+//static mut FPropertyVTable_ptr: *const FPropertyVTable = core::ptr::null();

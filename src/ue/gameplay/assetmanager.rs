@@ -1,6 +1,6 @@
 #![allow(nonstandard_style)]
 
-use crate::ue::coreuobject::UObject;
+use crate::ue::coreuobject::{UObject, UObjectVTable};
 use crate::ue::delegate::TMulticastDelegate;
 use crate::ue::fname::FName;
 use crate::ue::fstring::FString;
@@ -8,6 +8,93 @@ use crate::ue::gameplay::streamablemgr::FStreamableManager;
 use crate::ue::tarray::TArray;
 use crate::ue::tmap::TMap;
 use crate::ue::tshared::TSharedRef;
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct UAssetManagerVTable
+{
+    pub uobject: UObjectVTable,
+    pub ScanPathsForPrimaryAssets1: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ScanPathsForPrimaryAssets2: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub StartBulkScanning: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub StopBulkScanning: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub AddDynamicAsset: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub RecursivelyExpandBundleData: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub HasInitialScanCompleted: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ExpandVirtualPaths: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub AddAssetSearchRoot: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetData: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetDataList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetObject: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetObjectList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetPath: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetPathList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetIdForObject: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetIdForPath1: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetIdForPath2: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetIdForPackage: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetIdForData: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetIdList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetTypeInfo: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetTypeInfoList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub LoadPrimaryAssets: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub LoadPrimaryAsset: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub LoadPrimaryAssetsWithType: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub UnloadPrimaryAssets: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub UnloadPrimaryAsset: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub UnloadPrimaryAssetsWithType: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ChangeBundleStateForPrimaryAssets: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ChangeBundleStateForMatchingPrimaryAssets: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub PreloadPrimaryAssets: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub LoadAssetList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetAssetBundleEntry: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetAssetBundleEntries: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub FindMissingChunkList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub AcquireResourcesForAssetList1: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub AcquireResourcesForAssetList2: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub AcquireResourcesForPrimaryAssetList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetResourceAcquireProgress: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub SetPrimaryAssetTypeRules: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub SetPrimaryAssetRules: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub SetPrimaryAssetRulesExplicitly: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPrimaryAssetRules: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetManagedPackageList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPackageManagers: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ExtractPrimaryAssetIdFromData: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetAssetDataForPath: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub IsAssetDataBlueprintOfClassSet: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetAssetPathForData: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetRedirectedPrimaryAssetId: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetPreviousPrimaryAssetIds: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub DeterminePrimaryAssetIdForObject: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetRedirectedAssetPath1: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetRedirectedAssetPath2: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ExtractSoftObjectPaths: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub SearchAssetRegistryPaths: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub DoesAssetMatchSearchRules: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ShouldScanPrimaryAssetType: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub RegisterSpecificPrimaryAsset: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ScanPathsSynchronous: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub OnAssetRegistryAvailableAfterInitialization: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub StartInitialLoading: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub FinishInitialLoading: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetCachedPrimaryAssetEncryptionKeyGuid: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub LoadRedirectorMaps: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub GetAssetDataForPathInternal: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub UpdateCachedAssetData: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub RebuildObjectReferenceList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub OnAssetStateChangeCompleted: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub WriteCustomReport: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ScanPrimaryAssetTypesFromConfig: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ScanPrimaryAssetRulesFromConfig: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ApplyCustomPrimaryAssetRulesOverride: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub DoesPrimaryAssetMatchCustomOverride: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub PostInitialAssetScan: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub IsPathExcludedFromScan: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub ShouldIncludeInAssetSearch: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub AcquireChunkList: unsafe extern "C" fn( obj: *mut UAssetManager ),
+    pub OnChunkDownloaded: unsafe extern "C" fn( obj: *mut UAssetManager ),
+}
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -45,4 +132,6 @@ pub struct UAssetManager
     pub ChunkInstallDelegateHandle: u64,
     pub bOldTemporaryCachingMode: bool,
     pub AssetTypeMap: TMap<FName, TSharedRef<()>>,
+    pub CachedAssetRegistry: *mut (),
+    pub CachedSettings: *mut (),
 }

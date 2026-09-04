@@ -2,6 +2,7 @@ pub mod actor;
 pub mod world;
 pub mod assetmanager;
 pub mod streamablemgr;
+pub mod instance;
 use brickworks::patterns::*;
 use brickrust_macros::sig;
 use world::*;

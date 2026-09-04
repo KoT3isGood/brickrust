@@ -74,7 +74,6 @@ use libloading::*;
 use std::fs;
 use std::io;
 use std::collections::HashMap;
-use std::ffi::OsString;
 use core::ffi::CStr;
 use core::ffi::c_char;
 use std::path::PathBuf;

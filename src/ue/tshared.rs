@@ -2,6 +2,7 @@
 
 use crate::ue::{coreuobject::GObjects, fmalloc};
 
+#[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct FReferenceControllerBaseVTable {
     pub DestroyObject: unsafe extern "C" fn ( controller: *mut FReferenceControllerBase ),

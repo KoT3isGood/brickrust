@@ -3,8 +3,6 @@ use std::vec::Vec;
 use min_hook_rs::*;
 use core::ffi::c_void;
 
-use crate::BrickRust_print;
-use crate::br_print;
 
 #[derive(Clone)]
 struct Hook

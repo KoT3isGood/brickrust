@@ -1,4 +1,4 @@
-#[allow(nonstandard_style)]
+#![allow(nonstandard_style)]
 use crate::ue::tarray::TArray;
 
 #[repr(C)]

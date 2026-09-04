@@ -1,6 +1,5 @@
 
 use brickworks::{br_print, set_module_name};
-use inventory::*;
 use super::coreuobject::*;
 use super::FFrame;
 set_module_name!(b"blueprints\0");

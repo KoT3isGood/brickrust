@@ -2,13 +2,12 @@
 use crate::ue::fname::FName;
 use crate::ue::fname::NAME_NONE;
 use crate::ue::fproperty::FProperty;
-pub use crate::ue::ftext::FText;
-pub use crate::ue::tshared::TSharedRef;
-pub use crate::ue::fstring::FString;
-pub use crate::ue::tarray::TArray;
-pub use crate::ue::coreuobject::UObject;
+use crate::ue::ftext::FText;
+use crate::ue::tshared::TSharedRef;
+use crate::ue::fstring::FString;
+use crate::ue::tarray::TArray;
+use crate::ue::coreuobject::UObject;
 use crate::ue::toptional::TOptional;
-pub use crate::br::brickeditor::saveversion::*;
 use brickworks::br_print;
 use crate::BrickRust_print;
 #[repr(C)]
@@ -117,7 +116,7 @@ impl FBrickPropertyVTable
         panic!("User must implement this function and shouldn't call it")
     }
     pub unsafe extern "C" fn SerializeProperty
-        ( prop: *mut FBrickProperty, archive: *mut (), container: *const (), ref_resolver: *const () ) -> bool
+        ( _prop: *mut FBrickProperty, archive: *mut (), container: *const (), ref_resolver: *const () ) -> bool
     {
         br_print!("SerializeProperty {:p} {:p} {:p}", archive, container, ref_resolver);
         true

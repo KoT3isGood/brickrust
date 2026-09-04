@@ -4,5 +4,6 @@
 #[derive(Debug, Clone, Copy)]
 pub struct FGCObject
 {
+    pub vtable: *mut usize,
     pub bReferenceAdded: bool,
 }

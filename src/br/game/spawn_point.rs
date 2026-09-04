@@ -1,6 +1,6 @@
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-struct ISpawnPointInterface
+pub struct ISpawnPointInterface
 {
 
 }

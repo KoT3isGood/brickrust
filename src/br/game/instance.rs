@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+use crate::ue::gameplay::instance::UGameInstance;
 use crate::ue::tarray::*;
 use crate::ue::fstring::*;
 
@@ -32,4 +33,12 @@ pub(crate) unsafe fn init_signatures()
 
     let sig = lookup("UBrickGameInstance::GetEnabledModsHash", sig!("45 33 ff 48 8d 4c 24 20 41 8b f7")).sub(0x18);
     GetEnabledModsHash_ptr = Some(transmute(sig));
+}
+
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct UBrickGameInstance
+{
+    pub gameinstance: UGameInstance,
 }

@@ -8,9 +8,9 @@ pub unsafe fn gnames() -> *mut FNamePool
     GNAMES_PTR
 }
 
-use brickworks::{br_print, set_module_name};
+use brickworks::set_module_name;
 
-use crate::ue::fmalloc::{self, malloc};
+use crate::ue::fmalloc::{self};
 set_module_name!(b"fname\0");
 
 #[repr(C)]
@@ -63,7 +63,7 @@ pub struct FName {
 unsafe extern "C"
 {
     fn wctomb( mbchar: *mut u8, wchar: u16 );
-    fn mbtowc( wchar: *mut u16, mbchar: *const u8, count: usize );
+    //fn mbtowc( wchar: *mut u16, mbchar: *const u8, count: usize );
 }
 use core::fmt;
 use core::fmt::*;
@@ -164,7 +164,7 @@ impl FName
                 continue 
             }
             let slc = slice_from_raw_parts((*entry).name.as_ptr(), len);
-            let st = str::from_utf8_unchecked(&*slc);
+            let _st = str::from_utf8_unchecked(&*slc);
             if memcmp(s.as_ptr(), (*entry).name.as_ptr(), len) == 0
             {
                 let idx = (it.offset_from(start) as usize / 2) as u32;

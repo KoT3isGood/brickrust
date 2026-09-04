@@ -42,12 +42,12 @@ bitflags! {
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-struct FEngineVersionBase
+pub struct FEngineVersionBase
 {
-    major: u16,
-    minor: u16,
-    patch: u16,
-    changelist: u32,
+    pub major: u16,
+    pub minor: u16,
+    pub patch: u16,
+    pub changelist: u32,
 }
 
 #[repr(C)]

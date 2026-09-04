@@ -1,6 +1,8 @@
 use super::property::*;
 use crate::ue::fmath::FVector;
 use crate::ue::fname::FName;
+use crate::ue::fstring::FString;
+use crate::ue::ftext::FText;
 use brickworks::br_print;
 use crate::BrickRust_print;
 
@@ -87,9 +89,9 @@ pub struct FNumericBrickPropertyBaseVTable(pub FBrickPropertyVTable);
 
 impl FNumericBrickPropertyBase
 {
-    unsafe extern "C" fn ExportProperty( prop: *mut FBrickProperty, container: *const ()) -> FString
+    unsafe extern "C" fn ExportProperty( _prop: *mut FBrickProperty, _container: *const ()) -> FString 
     {
-        let value = FNumericBrickPropertyValue::default();
+        let _value = FNumericBrickPropertyValue::default();
         todo!()
     }
     pub unsafe extern "C" fn GetTypeName( _prop: *mut FBrickProperty ) -> FName
@@ -106,7 +108,7 @@ impl FNumericBrickPropertyBase
         br_print!("FNumericBrickPropertyBase ComparePropertyValues");
         false
     }
-    pub unsafe extern "C" fn GetValueAsText( _prop: *mut FBrickProperty, _container: *const (), out_value: *mut FText ) -> bool
+    pub unsafe extern "C" fn GetValueAsText( _prop: *mut FBrickProperty, _container: *const (), _out_value: *mut FText ) -> bool
     {
         //BrickRust_string_to_ftext(b"10.000\0".as_ptr(), out_value);
         br_print!("FNumericBrickPropertyBase GetValueAsText");

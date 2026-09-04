@@ -94,9 +94,9 @@ pub unsafe fn vtable_add_custom_tables
     }
     return (new, vcount, indexes)
 }
-pub unsafe fn class_vtable_clone<T>( vtable: *mut *mut usize)
+pub unsafe fn class_vtable_clone<T>( vtable: *mut *mut T)
 {
-    *vtable = copy_vtable(*vtable, size_of::<T>()/size_of::<usize>() );
+    *vtable = copy_vtable2::<T>(*vtable);
 }
 
 pub unsafe fn class_vtable_clone_estimate_size( vtable: *mut *mut usize )

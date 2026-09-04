@@ -37,15 +37,13 @@ impl FFrame
     {
         self.locals as *mut T
     }
-    pub unsafe fn set_output<T>(&self, name: &'static str, val: &mut T) -> bool
+    pub unsafe fn set_output<T>(&self, name: &'static str, _val: &mut T) -> bool
     {
         let mut param = self.out_params;
         loop 
         {
             if param.is_null() { return false };
             let prop = (*param).prop;
-            let (ptr, len) = (*prop).field.name_private.as_sptr();
-            br_print!("{}", str::from_utf8_unchecked(core::slice::from_raw_parts(ptr, len as usize)));
             if (*prop).field.name_private.equals_str(name)
             {
                 return true;

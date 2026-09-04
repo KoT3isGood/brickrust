@@ -44,6 +44,9 @@ use brickrust::br::bricks::brick::*;
 use brickrust::ue::uclass::*;
 use brickrust::ue::coreuobject::*;
 use brickrust::ue::tarray::*;
+use brickrust::ue::fstring::*;
+use brickrust::ue::ftext::*;
+use brickrust::ue::tshared::*;
 use brickrust::ue::fname::*;
 use brickrust::ue::tpair::*;
 

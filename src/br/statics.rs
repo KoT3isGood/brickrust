@@ -2,7 +2,7 @@
 
 use core::mem::transmute;
 use brickrust_macros::sig;
-use brickworks::{br_print, patterns::*, set_module_name};
+use brickworks::{patterns::*, set_module_name};
 
 use crate::ue::coreuobject::UObject;
 use crate::ue::fstring::*;

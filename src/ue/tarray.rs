@@ -1,11 +1,9 @@
 
-use brickworks::{br_print, set_module_name};
+use brickworks::set_module_name;
 set_module_name!("tarray");
 
 use super::fmalloc;
-use core::fmt;
 use core::fmt::*;
-use super::FName;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
