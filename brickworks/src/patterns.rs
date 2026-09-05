@@ -1,7 +1,17 @@
+use std::ffi::CStr;
+use std::ffi::CString;
+use std::fmt::Binary;
+use std::mem::MaybeUninit;
 use std::mem::zeroed;
 
-use crate::{br_print, win32::*};
+use crate::br_print;
+use crate::win32::*;
+#[cfg(feature = "brmk")]
+use crate::brmk::*;
 use crate::BrickRust_print;
+pub use inventory;
+pub use brickrust_macros::sig;
+pub use crate::lookup;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Signature {
@@ -19,17 +29,15 @@ pub struct ExternalFunction
 /**
  * Searches array of bytes for specific signature
  * */
-pub unsafe fn lookup_data( data: *const u8, data_len: usize, sign: Signature ) -> *const u8
+pub unsafe fn lookup_data( data: *const u8, data_len: usize, sign: CSignature ) -> *const u8
 {
-
-
-    let data_len = data_len - sign.bytes.len();
+    let data_len = data_len - sign.num;
     for i in 0..=data_len
     {
         let mut found = true;
-        for j in 0..sign.bytes.len()
+        for j in 0..sign.num
         {
-            if sign.mask[j] && (*data.add(i+j) != sign.bytes[j])
+            if *sign.mask.add(j) && (*data.add(i+j) != *sign.bytes.add(j))
             {
                 found = false;
                 break;
@@ -45,50 +53,9 @@ pub unsafe fn lookup_data( data: *const u8, data_len: usize, sign: Signature ) -
     return core::ptr::null();
 }
 
-/**
- * Searches game for specifc signature
- * */
-pub unsafe fn lookup_unsafe( sign: Signature ) -> *const u8
-{
-    let data_len: usize = get_base_size();
-    let data: *const u8 = get_base_address();
-    lookup_data(data, data_len, sign)
-}
 
-#[cfg(feature = "brmk")]
-pub unsafe fn lookup_brmk( sign: Signature ) -> *const u8
-{
-    for i in 0..BRMK_DLLS.dll_names.len()
-    {
-        let data = lookup_data(BRMK_DLLS.dll_addresses[i], BRMK_DLLS.dll_sizes[i], sign);
-        if data.is_null()
-        {
-            continue;
-        }
-        return data;
-    }
-
-    return core::ptr::null();
-}
-
-/**
- * Searches game for specifc signature
- * Panics when not found
- * */
-pub fn lookup( note: &'static str, sign: Signature ) -> *const u8
-{
-    let sig = unsafe { lookup_unsafe(sign) };
-    if sig.is_null()
-    {
-        br_print!("{}: {:p}", note, sig);
-        panic!("Failed to find {}", note)
-    }
-    else
-    {
-        br_print!("{}: {:p}", note, sig);
-    }
-    sig
-}
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
 pub enum LookupMode
 {
     /// provided as is
@@ -99,17 +66,8 @@ pub enum LookupMode
     Direct64,
 }
 
-pub unsafe fn lookup2( note: &'static str, offset: isize, mode: LookupMode, sign: Signature ) -> *const u8
+pub unsafe fn lookup_offset( addr: *const u8, offset: isize, mode: LookupMode) -> *const u8
 {
-    #[cfg(feature = "brmk")]
-    let addr = lookup_brmk(sign);
-    #[cfg(not(feature = "brmk"))]
-    let addr = lookup_unsafe(sign);
-    br_print!("{}: {:p}", note, addr);
-    if addr.is_null()
-    {
-        panic!("Failed to find {}", note)
-    }
     let addr = addr.offset(offset);
     match mode
     {
@@ -126,85 +84,94 @@ pub unsafe fn lookup2( note: &'static str, offset: isize, mode: LookupMode, sign
         }
     }
 }
-
-#[cfg(test)]
-mod test
+pub enum LookupInfo
 {
-    use super::*;
-    use brickrust_macros::sig;
+    Binary(isize, LookupMode, Signature),
+    Proc(&'static str),
+}
 
-    #[test]
-    fn lookup_byte()
+#[repr(C)]
+#[derive(Debug)]
+pub struct CSignature {
+    pub num: usize,
+    pub bytes: *const u8,
+    pub mask: *const bool,
+}
+unsafe extern "C"
+{
+    pub fn brickworks_binary_lookup( offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8;
+    pub fn brickworks_cpp_lookup( cpp: *const u8 ) -> *const u8;
+}
+
+pub struct InventoryLookupInfo
+{
+    pub ptr: *mut *const u8,
+    pub info: LookupInfo,
+    pub name: &'static str,
+}
+unsafe impl Sync for InventoryLookupInfo {}
+
+inventory::collect!(InventoryLookupInfo);
+
+#[repr(C)]
+pub union LookupValue<T: Copy>
+{
+    pub generic: *const u8,
+    pub typed: T,
+}
+
+impl<T: Copy> LookupValue<T>
+{
+    pub const fn null() -> LookupValue<T> { return LookupValue { generic: core::ptr::null() } }
+    pub unsafe fn unwrap(&self) -> T { self.typed }
+    pub unsafe fn as_mut_ref(&mut self) -> &mut T { &mut self.typed }
+}
+
+#[macro_export]
+macro_rules! lookup {
+    (
+        $(
+            pub const $name:ident : $ty:ty = $init:expr;
+        )*
+    ) => {
+        $(
+            use $crate::patterns::*;
+            pub static mut $name: LookupValue<$ty> = LookupValue::<$ty>::null();
+            $crate::patterns::inventory::submit! {
+                use $crate::patterns::InventoryLookupInfo;
+                InventoryLookupInfo
+                {
+                    ptr: unsafe { &mut $name.generic },
+                    info: $init,
+                    name: stringify!($name)
+                }
+            }
+        )*
+    };
+}
+
+pub unsafe fn do_lookup()
+{
+    for look in inventory::iter::<InventoryLookupInfo>
     {
-        const DATA: Signature = sig!("1F 2F 3F FF 1F 2F 4F AB CD EF");
-        
-        let mut r: *const u8;
-        unsafe {
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("1F"));
-            assert_eq!(DATA.bytes.as_ptr(), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("2F"));
-            assert_eq!(DATA.bytes.as_ptr().add(1), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("AB"));
-            assert_eq!(DATA.bytes.as_ptr().add(7), r);
-        }
-    }
-
-    #[test]
-    fn lookup_bytes()
-    {
-        const DATA: Signature = sig!("1F 2F 3F FF 1F 2F 4F AB CD EF");
-        
-        let mut r: *const u8;
-        unsafe {
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("1F 2F 3F FF"));
-            assert_eq!(DATA.bytes.as_ptr(), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("2F 3F"));
-            assert_eq!(DATA.bytes.as_ptr().add(1), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("AB CD"));
-            assert_eq!(DATA.bytes.as_ptr().add(7), r);
-        }
-    }
-
-    #[test]
-    fn lookup_bytes_not_found()
-    {
-        const DATA: Signature = sig!("1F 2F 3F FF 1F 2F 4F AB CD EF");
-        
-        let mut r: *const u8;
-        unsafe {
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("1F 2F 3F 4F"));
-            assert_eq!(core::ptr::null(), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("3F 3F"));
-            assert_eq!(core::ptr::null(), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("AB CD EF 00"));
-            assert_eq!(core::ptr::null(), r);
-        }
-    }
-
-    #[test]
-    fn lookup_unknown()
-    {
-        const DATA: Signature = sig!("1F 2F 3F FF 1F 2F 4F AB CD EF");
-        
-        let mut r: *const u8;
-        unsafe {
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("1F ?? 3F"));
-            assert_eq!(DATA.bytes.as_ptr(), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("1F ?? 4F"));
-            assert_eq!(DATA.bytes.as_ptr().add(4), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("?? ?? 1F 2F"));
-            assert_eq!(DATA.bytes.as_ptr().add(2), r);
-
-            r = lookup_data(DATA.bytes.as_ptr(), DATA.bytes.len(), sig!("AB ?? ??"));
-            assert_eq!(DATA.bytes.as_ptr().add(7), r);
+        match &look.info
+        {
+            LookupInfo::Binary(offset, mode, sig) =>
+            {
+                let sign = CSignature {
+                    num: sig.bytes.len(),
+                    bytes: sig.bytes.as_ptr(),
+                    mask: sig.mask.as_ptr(),
+                };
+                br_print!("{:#?} {:#?}",sig, mode);
+                *look.ptr = brickworks_binary_lookup(*offset, *mode, sign);
+                br_print!("{}, {:#?}", look.name,(*look.ptr));
+            }
+            LookupInfo::Proc(s) =>
+            {
+                let st = CString::new(*s).unwrap();
+                *look.ptr = brickworks_cpp_lookup(st.as_ptr() as *const u8);
+            }
         }
     }
 }

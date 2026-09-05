@@ -63,12 +63,14 @@
 
 
 #![allow(static_mut_refs)]
-pub mod win32;
+mod win32;
 pub mod logger;
 pub mod print;
 pub mod modinfo;
 pub mod patterns;
 pub mod hookmgr;
+
+mod brmk;
 
 use libloading::*;
 use std::fs;
@@ -95,11 +97,13 @@ unsafe extern "C" fn brickworks_init() {
     INITED = true;
 
     logger::init();
+
     panic::set_hook(Box::new(|info| {
         let bt = Backtrace::force_capture();
         br_print!("Panic: {}", info);
         br_print!("Backtrace:\n{}", bt);
     }));
+
     hookmgr::init();
     MODS = Some(HashMap::new());
 
@@ -128,6 +132,7 @@ unsafe extern "C" fn brickworks_init() {
             br_print!("Skipped: {}", m.0 );
             continue;
         }
+
         let mod_info: Symbol<extern "C" fn () -> ModInfo> = mod_info.unwrap();
         let mod_init: Symbol<extern "C" fn ()> = mod_init.unwrap();
         let modinfo = mod_info();

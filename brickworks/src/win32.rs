@@ -2,6 +2,7 @@
 use core::{ffi::*, mem::zeroed};
 use crate::brickworks_init;
 use crate::brickworks_deinit;
+use crate::patterns::*;
 
 type BOOL = i32;
 type HANDLE = *mut c_void;
@@ -82,23 +83,19 @@ pub unsafe fn get_base_size() -> usize
     BASE_SIZE
 }
 
-#[cfg(feature="brmk")]
-pub (crate) struct BRMKLookupInfo<const N: usize> {
-    pub dll_names: [*const u8; N],
-    pub dll_addresses: [*const u8; N],
-    pub dll_sizes: [usize; N],
+#[no_mangle]
+unsafe extern "C" fn brickworks_binary_lookup( offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8
+{
+    let data_len: usize = get_base_size();
+    let data: *const u8 = get_base_address();
+    let addr = lookup_data(data, data_len, sign);
+    lookup_offset(addr, offset, mode)
 }
 
-#[cfg(feature="brmk")]
-pub (crate) const BRMK_DLLS: BRMKLookupInfo<3> = BRMKLookupInfo
+#[no_mangle]
+unsafe extern "C" fn brickworks_cpp_lookup( cpp: *const u8 ) -> *const u8
 {
-    dll_names: [
-        b"BrickRigsModKitSteam-BrickRigs.dll\0".as_ptr(),
-        b"BrickRigsModKitSteam-Core.dll\0".as_ptr(),
-        b"BrickRigsModKitSteam-CoreUObject.dll\0".as_ptr(),
-    ],
-    dll_addresses: unsafe { zeroed() },
-    dll_sizes: unsafe { zeroed() },
-};
+    core::ptr::null()
+}
 
 

@@ -65,6 +65,7 @@ name = "brickworks"
 version = "0.0.4"
 dependencies = [
  "brickrust_macros",
+ "inventory",
  "libloading",
  "min_hook_rs",
 ]

@@ -1,6 +1,7 @@
 
 use crate::ue::fstring::FString;
 use crate::ue::tshared::TSharedRef;
+use brickworks::patterns::*;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -19,9 +20,9 @@ impl FText
     }
 }
 
-pub(crate) static mut Conv_StringToText: Option<unsafe extern "C" fn (a: *const FString) -> FText> = None;
-
-unsafe extern "C"
+lookup!
 {
-    pub fn BrickRust_string_to_ftext( str: *const u8, text: *mut FText );
+    pub const Conv_StringToText: unsafe extern "C" fn (a: *const FString) -> FText = 
+        LookupInfo::Binary(23, LookupMode::Offset32, sig!("74 41 48 8d 54 24 20 48 8b c8 e8 ?? ?? ?? ?? 48 8b d0 48 8d 4c 24 30"));
 }
+

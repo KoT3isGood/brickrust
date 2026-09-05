@@ -21,11 +21,13 @@ pub(crate) unsafe fn deinit()
     fclose(LOGGER);
 }
 
-/**
- * Puts a message into a logger.
- * */
+///
+/// Puts a message into a logger.
+/// During runtime it is written into brickworks.txt
+/// In BRMK it is directly written into logs
+///
 #[no_mangle]
-pub unsafe fn brickworks_puts( modname: *const u8, value: *const u8 )
+pub unsafe extern "C" fn brickworks_puts( modname: *const u8, value: *const u8 )
 {
     _lock_file(LOGGER);
     fprintf(LOGGER,b"[%s] %s\n\0".as_ptr(), modname, value);

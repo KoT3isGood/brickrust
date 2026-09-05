@@ -2,10 +2,16 @@
 
 use std::{collections::HashMap, ptr::slice_from_raw_parts};
 
-pub static mut GNAMES_PTR: *mut FNamePool = core::ptr::null_mut();
-pub unsafe fn gnames() -> *mut FNamePool
+use brickworks::patterns::*;
+
+lookup! {
+    pub const GNAMES_PTR: *mut FNamePool = 
+        LookupInfo::Binary(5, LookupMode::Offset32, sig!("74 09 48 8D 15 ? ? ? ? EB 16"));
+}
+#[allow(nonstandard_style)]
+pub unsafe fn GNames() -> &'static mut FNamePool
 {
-    GNAMES_PTR
+    &mut **GNAMES_PTR.as_mut_ref()
 }
 
 use brickworks::set_module_name;
@@ -121,13 +127,13 @@ impl FName
     }
     pub unsafe fn as_sptr(&self) -> (*const u8, i16)
     {
-        let entry = (*gnames()).get_entry(self.comparison_index);
+        let entry = GNames().get_entry(self.comparison_index);
         let len = (*entry).key >> 6;
         return ((*entry).name.as_ptr(), len);
     }
     pub unsafe fn as_sptr2(&self) -> (*const u8, i16, bool)
     {
-        let entry = (*gnames()).get_entry(self.comparison_index);
+        let entry = GNames().get_entry(self.comparison_index);
         let len = (*entry).key >> 6;
         return ((*entry).name.as_ptr(), len, (*entry).key & 0x1 != 0);
     }
@@ -183,9 +189,9 @@ impl FName
      * */
     pub unsafe fn search_str_raw( s: &'static str ) -> FName
     {
-        let blocks = (*gnames()).allocator.blocks;
-        let current_block = (*gnames()).allocator.current_block as usize;
-        for i in 0..(*gnames()).allocator.current_block as usize
+        let blocks = GNames().allocator.blocks;
+        let current_block = GNames().allocator.current_block as usize;
+        for i in 0..GNames().allocator.current_block as usize
         {
             let n = FName::block_search_str(s, blocks[i], BLOCK_SIZE );
             if n.is_some()
@@ -195,7 +201,7 @@ impl FName
                 return n;
             }
         }
-        let n = FName::block_search_str(s, blocks[current_block], (*gnames()).allocator.current_block_cursor as usize );
+        let n = FName::block_search_str(s, blocks[current_block], GNames().allocator.current_block_cursor as usize );
         if n.is_some()
         {
             let mut n = n.unwrap();
@@ -236,14 +242,14 @@ impl FName
     {
         assert!(s.len()<1024);
 
-        let blocks = (*gnames()).allocator.blocks;
-        let current_block = (*gnames()).allocator.current_block as usize;
-        let cursor = (*gnames()).allocator.current_block_cursor;
+        let blocks = GNames().allocator.blocks;
+        let current_block = GNames().allocator.current_block as usize;
+        let cursor = GNames().allocator.current_block_cursor;
         let name = blocks[current_block].add(cursor as usize);
         *(name as *mut u16) = (s.len() as u16) << 6;
         core::ptr::copy_nonoverlapping(s.as_ptr(), name.add(2) as *mut u8, s.len());
         let aligned_len = if s.len() % 2 == 1 { s.len() + 1 } else {s.len()};
-        (*gnames()).allocator.current_block_cursor += 2 + aligned_len as i32;
+        GNames().allocator.current_block_cursor += 2 + aligned_len as i32;
 
     }
 
@@ -251,19 +257,19 @@ impl FName
     {
         assert!(s.len()<1024);
 
-        let cursor = (*gnames()).allocator.current_block_cursor;
+        let cursor = GNames().allocator.current_block_cursor;
         let end = cursor as usize + s.len() + 2; 
-        let blocks = &mut (*gnames()).allocator.blocks;
+        let blocks = &mut GNames().allocator.blocks;
         if end > BLOCK_SIZE
         {
-            (*gnames()).allocator.current_block_cursor = 0;
-            (*gnames()).allocator.current_block += 1;
-            let current_block = (*gnames()).allocator.current_block as usize;
+            GNames().allocator.current_block_cursor = 0;
+            GNames().allocator.current_block += 1;
+            let current_block = GNames().allocator.current_block as usize;
             blocks[current_block] = fmalloc::malloc(BLOCK_SIZE) as *const u8;
 
         }
-        let current_block = (*gnames()).allocator.current_block as u32;
-        let cursor = (*gnames()).allocator.current_block_cursor as u32;
+        let current_block = GNames().allocator.current_block as u32;
+        let cursor = GNames().allocator.current_block_cursor as u32;
         FName::write_new_str(s);
         return FName { comparison_index: (current_block<<16)+cursor/2, number: 0 };
     }

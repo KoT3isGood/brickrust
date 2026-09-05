@@ -8,8 +8,8 @@ use super::fproperty::*;
 use super::tarray::*;
 use super::ffield::*;
 use super::coreuobject::*;
+use brickworks::patterns::*;
 
-pub(crate) static mut UClass_FindFunctionByName_ptr: Option<unsafe extern "C" fn (cls: *const UClass, name: FName, inherit: u32) -> *mut UFunction> = None;
 set_module_name!(b"uclass\0");
 
 #[repr(C)]
@@ -161,6 +161,12 @@ pub struct UClass {
     pub ClassDefaultObject: *mut UObject,
     pub SparseClassData: *mut (),
     pub SparseClassDataStruct: *mut (),
+}
+
+lookup!
+{
+    pub const UClass_FindFunctionByName_ptr: unsafe extern "C" fn (cls: *const UClass, name: FName, inherit: u32) -> *mut UFunction = 
+        LookupInfo::Binary(-0xD, LookupMode::SignatureStart, sig!("8b 81 38 01 00 00 45 8b f0 48 8b da 48 8b e9"));
 }
 
 impl UClass

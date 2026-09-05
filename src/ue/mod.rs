@@ -25,6 +25,7 @@ pub mod gcobject;
 pub mod delegate;
 
 use brickworks::br_print;
+use brickworks::lookup;
 use brickworks::patterns::*;
 use brickworks::hookmgr;
 use brickrust_macros::sig;
@@ -36,13 +37,8 @@ use core::mem::transmute;
 use fframe::FFrame;
 set_module_name!(b"ue\0");
 
-pub(crate) static mut UEngine_Init_ptr: Option<unsafe extern "C" fn (a: *mut (), b: *mut ())> = None;
 static mut UEngine_Init_hook: Option<unsafe extern "C" fn (a: *mut (), b: *mut ())> = None;
-
-pub(crate) static mut UEngine_LoadMap_ptr: Option<unsafe extern "C" fn (a: *mut (), b: *mut (), c: *mut (), d: *mut (), e: *mut ()) -> bool> = None;
 static mut UEngine_LoadMap_hook: Option<unsafe extern "C" fn (a: *mut (), b: *mut (), c: *mut (), d: *mut (), e: *mut ()) -> bool> = None;
-
-static mut StaticConstructObject_Internal_hook: Option<StaticConstructObject_t> = None;
 
 unsafe extern "C" fn static_load( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObjectBase
 {
@@ -156,32 +152,15 @@ unsafe fn engine_load()
     }
 }
 
+lookup! {
+    pub const UEngine_Init_ptr: unsafe extern "C" fn (a: *mut (), b: *mut ()) = 
+        LookupInfo::Binary(-0x10, LookupMode::SignatureStart, sig!("48 8d 6c 24 d9 48 81 ec 00 01 00 00 4c 8b f1"));
+    pub const UEngine_LoadMap_ptr: unsafe extern "C" fn (a: *mut (), b: *mut (), c: *mut (), d: *mut (), e: *mut ()) -> bool =
+        LookupInfo::Binary(-0x3C, LookupMode::SignatureStart, sig!("4c 89 74 24 60 4c 8b ea 4c 89 4c 24 30 4c 89 44 24 70 48 89 4c 24 50"));
+}
+
 pub(crate) unsafe fn init_signatures()
 {
-    gameplay::init_signatures();
-
-    GOBJECTS_PTR = lookup2("GObjects", 8, LookupMode::Offset32, sig!("0F AF EA 41 FF C9")) as *mut _;
-    GNAMES_PTR = lookup2("GNames", 5, LookupMode::Offset32,sig!("74 09 48 8D 15 ? ? ? ? EB 16")) as *mut _;
-    
-    let sig = lookup2("Conv_StringToText", 24, LookupMode::Offset32, sig!("74 41 48 8d 54 24 20 48 8b c8 e8 ?? ?? ?? ?? 48 8b d0 48 8d 4c 24 30"));
-    Conv_StringToText = Some(transmute(sig));
-
-    let sig = lookup2("FMemory::Realloc", -0x1C, LookupMode::SignatureStart,sig!("48 8b fa 48 85 c9 75 0c"));
-    fmalloc::Realloc = Some(transmute(sig));
-    
-    let sig = lookup2("FMemory::Malloc", -0xA, LookupMode::SignatureStart, sig!("48 8b f9 8b da 48 8b 0d ?? ?? ?? ?? 48 85 c9"));
-    fmalloc::Malloc = Some(transmute(sig));
-
-    let sig = lookup2("FMemory::Free", 0x0, LookupMode::SignatureStart,sig!("48 85 c9 74 2e 53"));
-    fmalloc::Free = Some(transmute(sig));
-
-
-    let sig = lookup2("UClass::FindFunctionByName", -0xD, LookupMode::SignatureStart, sig!("8b 81 38 01 00 00 45 8b f0 48 8b da 48 8b e9"));
-    UClass_FindFunctionByName_ptr = Some(transmute(sig));
-
-    let sig = lookup2("UEngine::Init", -0x10, LookupMode::SignatureStart, sig!("48 8d 6c 24 d9 48 81 ec 00 01 00 00 4c 8b f1"));
-    UEngine_Init_ptr = Some(transmute(sig));
-
     UEngine_Init_hook = Some(
         transmute(
             hookmgr::hook(
@@ -191,9 +170,7 @@ pub(crate) unsafe fn init_signatures()
         )
     );
 
-    let sig = lookup2("UEngine::LoadMap", -0x3C, LookupMode::SignatureStart, sig!("4c 89 74 24 60 4c 8b ea 4c 89 4c 24 30 4c 89 44 24 70 48 89 4c 24 50"));
-    UEngine_LoadMap_ptr = Some(transmute(sig));
-
+    br_print!("{:#?}", UEngine_Init_ptr.unwrap());
     UEngine_LoadMap_hook = Some(
         transmute(
             hookmgr::hook(
@@ -202,10 +179,6 @@ pub(crate) unsafe fn init_signatures()
             )
         )
     );
-
-    let sig = lookup2("UObject::StaticConstructObject_Internal", -0x51, LookupMode::SignatureStart, sig!("F7 86 CC 00 00 00 80 00 00 10"));
-    br_print!("{:p}", sig);
-    StaticConstructObject_Internal = Some(transmute(sig));
 
     StaticConstructObject_Internal_hook = Some(
         transmute(
@@ -216,8 +189,6 @@ pub(crate) unsafe fn init_signatures()
         )
     );
 
-    let sig = lookup2("UObject::StaticLoadObject", -0x23, LookupMode::SignatureStart, sig!("48 33 c4 48 89 85 80 02 00 00 0f b6 85 10 03 00 00"));
-    StaticLoadObject_ptr = Some(transmute(sig));
     StaticLoadObject_hook = Some(
         transmute(
             hookmgr::hook(
@@ -227,8 +198,6 @@ pub(crate) unsafe fn init_signatures()
         )
     );
 
-    let sig = lookup2("ProcessLocalScriptFunction", -0x30, LookupMode::SignatureStart, sig!("80 f9 04 74 34 66 66 66 0f 1f 84 00 00 00 00 00 48 ff c0"));
-    ProcessInternal_ptr = Some(transmute(sig));
     ProcessInternal_hook = Some(
         transmute(
             hookmgr::hook(

@@ -98,8 +98,8 @@ use ue::*;
 
 unsafe fn init_signatures()
 {
+    brickworks::patterns::do_lookup();
     ue::init_signatures();
-    br::init_signatures();
 }
 
 use crate::ue::blueprint;

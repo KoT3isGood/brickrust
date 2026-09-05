@@ -4,6 +4,7 @@
 use bitflags::bitflags;
 use brickworks::br_print;
 use brickworks::set_module_name;
+use brickworks::patterns::*;
 set_module_name!(b"coreuobject\0");
 
 use crate::ue::fframe::FFrame;
@@ -12,16 +13,22 @@ use crate::ue::fstring::FString;
 use super::fname::*;
 use super::uclass::*;
 
-pub(crate) static mut StaticConstructObject_Internal: Option<StaticConstructObject_t> = None;
-pub(crate) type StaticConstructObject_t = unsafe extern "C" fn ( params: FStaticConstructObjectParameters ) -> *mut UObjectBase;
-
-pub(crate) type fnProcessInternal = unsafe extern "C" fn(obj: *mut UObject, stack: *mut FFrame, result: *mut ());
-pub(crate) static mut ProcessInternal_ptr: Option<fnProcessInternal> = None;
-pub(crate) static mut ProcessInternal_hook: Option<fnProcessInternal> = None;
-
+pub(crate) type fnStaticConstructObject = unsafe extern "C" fn ( params: FStaticConstructObjectParameters ) -> *mut UObjectBase;
 pub(crate) type fnStaticLoadObject = unsafe extern "C" fn
 ( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObject;
-pub(crate) static mut StaticLoadObject_ptr: Option<fnStaticLoadObject> = None;
+pub(crate) type fnProcessInternal = unsafe extern "C" fn(obj: *mut UObject, stack: *mut FFrame, result: *mut ());
+lookup!
+{
+    pub const StaticConstructObject_Internal: fnStaticConstructObject =
+        LookupInfo::Binary(-0x51, LookupMode::SignatureStart, sig!("F7 86 CC 00 00 00 80 00 00 10"));
+    pub const ProcessInternal_ptr: fnProcessInternal = 
+        LookupInfo::Binary(-0x30, LookupMode::SignatureStart, sig!("80 f9 04 74 34 66 66 66 0f 1f 84 00 00 00 00 00 48 ff c0"));
+    pub const StaticLoadObject_ptr: fnStaticLoadObject = 
+        LookupInfo::Binary(-0x23, LookupMode::SignatureStart, sig!("48 33 c4 48 89 85 80 02 00 00 0f b6 85 10 03 00 00"));
+}
+
+pub(crate) static mut StaticConstructObject_Internal_hook: Option<fnStaticConstructObject> = None;
+pub(crate) static mut ProcessInternal_hook: Option<fnProcessInternal> = None;
 pub(crate) static mut StaticLoadObject_hook: Option<fnStaticLoadObject> = None;
 
 pub(crate) static mut UCLASS: *mut UClass = core::ptr::null_mut();
@@ -119,11 +126,13 @@ impl FUObjectArray
 
 }
 
-pub(crate) static mut GOBJECTS_PTR: *mut FUObjectArray = core::ptr::null_mut();
-
+lookup! {
+    pub const GOBJECTS_PTR: *mut FUObjectArray = 
+        LookupInfo::Binary(8, LookupMode::Offset32, sig!("0F AF EA 41 FF C9"));
+}
 pub unsafe fn GObjects() -> &'static mut FUObjectArray
 {
-    return &mut *GOBJECTS_PTR;
+    return &mut *GOBJECTS_PTR.unwrap();
 }
 
 #[repr(C)]
