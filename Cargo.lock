@@ -40,7 +40,7 @@ checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
 
 [[package]]
 name = "brickrust"
-version = "0.0.4+br1.11.5"
+version = "0.0.5+br1.11.5"
 dependencies = [
  "backtrace",
  "bitflags",
@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "brickworks"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "brickrust_macros",
  "inventory",

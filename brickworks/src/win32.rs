@@ -3,6 +3,7 @@ use core::{ffi::*, mem::zeroed};
 use crate::brickworks_init;
 use crate::brickworks_deinit;
 use crate::patterns::*;
+use min_hook_rs::*;
 
 type BOOL = i32;
 type HANDLE = *mut c_void;
@@ -84,7 +85,7 @@ pub unsafe fn get_base_size() -> usize
 }
 
 #[no_mangle]
-unsafe extern "C" fn brickworks_binary_lookup( offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8
+pub unsafe extern "C" fn brickworks_binary_lookup( offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8
 {
     let data_len: usize = get_base_size();
     let data: *const u8 = get_base_address();
@@ -93,9 +94,20 @@ unsafe extern "C" fn brickworks_binary_lookup( offset: isize, mode: LookupMode, 
 }
 
 #[no_mangle]
-unsafe extern "C" fn brickworks_cpp_lookup( cpp: *const u8 ) -> *const u8
+pub unsafe extern "C" fn brickworks_cpp_lookup( cpp: *const u8 ) -> *const u8
 {
     core::ptr::null()
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn brickworks_hook_internal( f: *const (), new_fn: *const() ) -> *const ()
+{
+    let r = create_hook( f as *mut c_void, new_fn as *mut c_void );
+    if r.is_err() { return core::ptr::null(); }
+    let f = r.unwrap();
 
+    let r = enable_hook(f as *mut c_void);
+    if r.is_err() { return core::ptr::null(); }
+
+    core::mem::transmute(f)
+}

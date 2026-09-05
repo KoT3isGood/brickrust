@@ -37,18 +37,17 @@ impl FFrame
     {
         self.locals as *mut T
     }
-    pub unsafe fn set_output<T>(&self, name: &'static str, _val: &mut T) -> bool
+    pub unsafe fn set_output<T: Copy>(&self, name: &'static str, val: T) -> bool
     {
         let mut param = self.out_params;
-        loop 
-        {
-            if param.is_null() { return false };
+        while !param.is_null() {
             let prop = (*param).prop;
-            if (*prop).field.name_private.equals_str(name)
-            {
+            if (*prop).field.name_private.equals_str(name) {
+                std::ptr::write((*param).addr as *mut T, val);
                 return true;
             }
             param = (*param).next;
         }
+        false
     }
 }

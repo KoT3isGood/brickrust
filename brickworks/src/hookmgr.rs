@@ -1,14 +1,16 @@
 use std::collections::HashMap;
 use std::vec::Vec;
-use min_hook_rs::*;
 use core::ffi::c_void;
+
+use crate::win32::brickworks_hook_internal;
 
 
 #[derive(Clone)]
 struct Hook
 {
     f: *const (),
-    subhooks: Vec<*const ()>,
+    prehooks: Vec<*const ()>,
+    posthooks: Vec<*const ()>,
 }
 
 static mut HOOKS: Option<HashMap<*const (), Hook>> = None;
@@ -34,34 +36,46 @@ pub unsafe fn hook( f: *const (), new_fn: *const() ) -> *const ()
 
     let mut h: Hook = Hook { 
         f: core::ptr::null(), 
-        subhooks: Vec::new(),
+        prehooks: Vec::new(),
+        posthooks: Vec::new(),
     };
 
-    let r = create_hook( f as *mut c_void, new_fn as *mut c_void );
-    if r.is_err() { return core::ptr::null(); }
-    h.f = core::mem::transmute(r.unwrap());
-
-    let r = enable_hook(f as *mut c_void);
-    if r.is_err() { return core::ptr::null(); }
+    h.f = brickworks_hook_internal(f, new_fn);
 
     hooks.insert(f, h.clone());
     h.f
 }
-
-pub unsafe fn add_subhook( f: *const (), sub: *const () )
+pub unsafe fn add_prehook( f: *const (), sub: *const () )
 {
     let hooks = HOOKS.as_mut().unwrap();
     let r = hooks.get_mut(&f);
     if r.is_none() { panic!("function not found: {:p}", f) }
     let h: &mut Hook = r.unwrap();
-    h.subhooks.push(sub);
-
+    h.prehooks.push(sub);
 }
-pub unsafe fn get_subhooks( f: *const () ) -> (*const *const (), usize)
+pub unsafe fn add_posthook( f: *const (), sub: *const () )
+{
+    let hooks = HOOKS.as_mut().unwrap();
+    let r = hooks.get_mut(&f);
+    if r.is_none() { panic!("function not found: {:p}", f) }
+    let h: &mut Hook = r.unwrap();
+    h.posthooks.push(sub);
+}
+
+pub unsafe fn get_prehooks( f: *const () ) -> (*const *const (), usize)
 {
     let hooks = HOOKS.as_mut().unwrap();
     let r = hooks.get(&f);
     if r.is_none() { panic!("function not found: {:p}", f) }
     let h: &Hook = r.unwrap();
-    return (h.subhooks.as_ptr(), h.subhooks.len());
+    return (h.prehooks.as_ptr(), h.prehooks.len());
+}
+
+pub unsafe fn get_posthooks( f: *const () ) -> (*const *const (), usize)
+{
+    let hooks = HOOKS.as_mut().unwrap();
+    let r = hooks.get(&f);
+    if r.is_none() { panic!("function not found: {:p}", f) }
+    let h: &Hook = r.unwrap();
+    return (h.posthooks.as_ptr(), h.posthooks.len());
 }

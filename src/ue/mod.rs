@@ -43,7 +43,7 @@ static mut UEngine_LoadMap_hook: Option<unsafe extern "C" fn (a: *mut (), b: *mu
 unsafe extern "C" fn static_load( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObjectBase
 {
     let uobject = (StaticLoadObject_hook.unwrap())(class, in_outer, inname, filename, flags, reconciliation);
-    let (subhooks, count) = hookmgr::get_subhooks(
+    let (subhooks, count) = hookmgr::get_posthooks(
         transmute(StaticLoadObject_ptr.unwrap())
     );
     let subhooks: *const unsafe fn( obj: *mut UObjectBase, class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32 ) = transmute(subhooks);
@@ -57,7 +57,7 @@ unsafe extern "C" fn static_load( class: *mut UClass, in_outer: *mut UObject, in
 unsafe extern "C" fn static_construct( params: FStaticConstructObjectParameters ) -> *mut UObjectBase
 {
     let uobject = (StaticConstructObject_Internal_hook.unwrap())(params);
-    let (subhooks, count) = hookmgr::get_subhooks(
+    let (subhooks, count) = hookmgr::get_posthooks(
         transmute(StaticConstructObject_Internal.unwrap())
     );
     let subhooks: *const unsafe fn( params: FStaticConstructObjectParameters, obj: *mut UObjectBase ) = transmute(subhooks);
@@ -71,7 +71,7 @@ unsafe extern "C" fn engine_init(a: *mut (), b: *mut ())
 {
     (UEngine_Init_hook.unwrap())(a, b);
 
-    let (subhooks, count) = hookmgr::get_subhooks(
+    let (subhooks, count) = hookmgr::get_posthooks(
         transmute(UEngine_Init_ptr.unwrap())
     );
 
@@ -86,7 +86,7 @@ unsafe extern "C" fn engine_loadmap(a: *mut (), b: *mut (), c: *mut (), d: *mut 
 {
     let r = (UEngine_LoadMap_hook.unwrap())(a, b, c, d, e);
 
-    let (subhooks, count) = hookmgr::get_subhooks(
+    let (subhooks, count) = hookmgr::get_posthooks(
         transmute(UEngine_LoadMap_ptr.unwrap())
     );
 
