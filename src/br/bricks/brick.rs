@@ -18,12 +18,17 @@ pub struct FBrickTickFunction
     pub LastTickTime: f32,
     pub Target: *mut UBrick,
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct FBrickDamage
-{
-    pub Data: u8,
+bitflags! {
+    #[repr(C)]
+    #[derive(Debug, Copy, Clone)]
+    pub struct FBrickDamage: u8
+    {
+        const Burnt = 0x1;
+        const Damaged = 0x2;
+        const IsOnFire = 0x4;
+    }
 }
+
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -250,8 +255,7 @@ pub struct UBrick
     pub BrickClusterRoot: *mut UBrick,
     /// Struct used on part roots to store additional data
     pub PartRootParams: *mut (),
-    /// Replicated damage information
-    pub BrickDamage: FBrickDamage,
+    pub _a0: u32,
     /// While on fire: Time remaining until the brick spreads fire or stops burning
     /// While not on fire: Next time the brick is allowed to catch fire (after being extinguished)
     pub FireTime: f32,
@@ -261,11 +265,17 @@ pub struct UBrick
     pub ReplicationKey: u16,
     /// Physical material used for this Brick
     pub BrickMaterial: *mut (),
-    pub _a1: u64,
+    // Texture pattern for this brick
+    pub BrickPattern: *mut (),
     /// Custom color of the brick
     pub BrickColor: FColor,
-    /// Texture pattern for this brick
-    pub BrickPattern: *mut (),
+    pub _a2: u32,
+    pub _a3: u32,
+    pub _a4: u8,
+    pub _a5: u8,
+    pub _a6: u8,
+    /// Replicated damage information
+    pub BrickDamage: FBrickDamage,
     /// Whether this brick should influence fluid dynamics
     pub bGenerateLift: bool,
 }

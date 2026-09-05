@@ -8,7 +8,7 @@ use super::brick::*;
 
 bitflags! {
     #[repr(C)]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct UMotorBrickFlags: u8
     {
         const MANUALLY_SHIFTED = 0x1;
@@ -37,7 +37,8 @@ pub struct UMotorBrick
     pub ExhaustThrottle: f32,
     /// The cached boost factor given from all connected compressors
     pub CompressorBoostFactor: f32,
-    pub _a1: usize,
+    pub _a1: u8,
+    pub flags: UMotorBrickFlags,
     pub StartupAC: TSharedPtr<()>,
     pub MotorAC: TSharedPtr<()>,
     pub BackFireAC: TSharedPtr<()>,

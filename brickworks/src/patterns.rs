@@ -1,14 +1,6 @@
-use std::ffi::CStr;
 use std::ffi::CString;
-use std::fmt::Binary;
-use std::mem::MaybeUninit;
-use std::mem::zeroed;
-
-use crate::br_print;
-use crate::win32::*;
 #[cfg(feature = "brmk")]
 use crate::brmk::*;
-use crate::BrickRust_print;
 pub use inventory;
 pub use brickrust_macros::sig;
 pub use crate::lookup;
@@ -163,9 +155,7 @@ pub unsafe fn do_lookup()
                     bytes: sig.bytes.as_ptr(),
                     mask: sig.mask.as_ptr(),
                 };
-                br_print!("{:#?} {:#?}",sig, mode);
                 *look.ptr = brickworks_binary_lookup(*offset, *mode, sign);
-                br_print!("{}, {:#?}", look.name,(*look.ptr));
             }
             LookupInfo::Proc(s) =>
             {
