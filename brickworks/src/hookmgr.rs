@@ -2,6 +2,9 @@ use std::collections::HashMap;
 use std::vec::Vec;
 use core::ffi::c_void;
 
+#[cfg(feature = "brmk")]
+use crate::brmk::brickworks_hook_internal;
+#[cfg(not(feature = "brmk"))]
 use crate::win32::brickworks_hook_internal;
 
 

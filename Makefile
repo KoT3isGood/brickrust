@@ -25,10 +25,12 @@ doc:
 
 ifeq ($(dev),true)
 build:
-	cargo build $(CARGO_TARGET) --examples
+	cargo build $(CARGO_TARGET) --target x86_64-pc-windows-gnu
 else
 build:
 	cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu
+build_brmk:
+	cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu --features=brmk
 endif
 
 ifdef DIR
@@ -37,16 +39,23 @@ xinput:
 	cd xinput_proxy && cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu
 
 install: xinput build
-	cp "$(TARGET_RELEASE)/deps/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
+	cp "$(TARGET)/deps/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	cp "$(TARGET)/deps/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	cp "$(MINGW)/libgcc_s_seh-1.dll" "$(DIR)" 
 	cp "$(MINGW)/libwinpthread-1.dll" "$(DIR)" 
 	mkdir -p "$(DIR)/brickworks"
 
+install_brmk: build_brmk
+	mkdir -p "$(DIR)/BrickRigs/Plugins/BrickRust/Binaries/Win64"
+	cp "$(TARGET)/deps/brickworks.dll" "$(DIR)/BrickRigs/Plugins/BrickRust/Binaries/Win64/BrickRigsModKitSteam-BrickRust.dll" 
+	cp "$(MINGW)/libgcc_s_seh-1.dll" "$(DIR)/BrickRigs/Binaries/Win64"
+	cp "$(MINGW)/libwinpthread-1.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
+	mkdir -p "$(DIR)/BrickRigs/Binaries/Win64/brickworks"
+
 
 else
 install:
-install_examples:
+install_brmk:
 endif
 
 run: install

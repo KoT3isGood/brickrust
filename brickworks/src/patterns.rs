@@ -1,4 +1,5 @@
 use std::ffi::CString;
+use crate::br_print;
 #[cfg(feature = "brmk")]
 use crate::brmk::*;
 pub use inventory;
@@ -80,6 +81,7 @@ pub enum LookupInfo
 {
     Binary(isize, LookupMode, Signature),
     Proc(&'static str),
+    ProcMangled(&'static str),
 }
 
 #[repr(C)]
@@ -127,7 +129,6 @@ macro_rules! lookup {
         )*
     ) => {
         $(
-            use $crate::patterns::*;
             pub static mut $name: LookupValue<$ty> = LookupValue::<$ty>::null();
             $crate::patterns::inventory::submit! {
                 use $crate::patterns::InventoryLookupInfo;
@@ -158,6 +159,11 @@ pub unsafe fn do_lookup()
                 *look.ptr = brickworks_binary_lookup(*offset, *mode, sign);
             }
             LookupInfo::Proc(s) =>
+            {
+                let st = CString::new(*s).unwrap();
+                *look.ptr = brickworks_cpp_lookup(st.as_ptr() as *const u8);
+            }
+            LookupInfo::ProcMangled(s) =>
             {
                 let st = CString::new(*s).unwrap();
                 *look.ptr = brickworks_cpp_lookup(st.as_ptr() as *const u8);

@@ -93,7 +93,7 @@ macro_rules! set_module_name {
         #[allow(non_snake_case)]
         unsafe fn BrickRust_print( str: *const u8 )
         {
-            use brickworks::logger;
+            use $crate::logger;
             logger::brickworks_puts(
                 $name.as_ptr(),
                 str

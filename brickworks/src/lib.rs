@@ -63,14 +63,16 @@
 
 
 #![allow(static_mut_refs)]
-mod win32;
 pub mod logger;
 pub mod print;
 pub mod modinfo;
 pub mod patterns;
 pub mod hookmgr;
 
-mod brmk;
+#[cfg(feature = "brmk")]
+pub mod brmk;
+#[cfg(not(feature = "brmk"))]
+pub mod win32;
 
 use libloading::*;
 use std::fs;
@@ -112,6 +114,7 @@ unsafe extern "C" fn brickworks_init() {
     /*
      * print this thing
      * */
+    br_print!("Working directory: {}", std::env::current_dir().unwrap().display());
     for m in MODS.as_mut().unwrap().iter()
     {
         use modinfo::ModInfo;
