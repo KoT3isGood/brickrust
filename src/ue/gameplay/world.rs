@@ -57,9 +57,9 @@ lookup!
 lookup!
 {
     pub const GWORLD: *mut *mut UWorld = 
-        LookupInfo::Binary(0x8, LookupMode::Offset32,sig!("0F 2E ? 74 ? 48 8B 1D ? ? ? ? 48 85 DB 74"));
+        LookupInfo::ProcMangled("?GWorld@@3VUWorldProxy@@A");
     pub const SpawnActor_ptr: fnSpawnActor =
-        LookupInfo::Binary(-0x33, LookupMode::SignatureStart, sig!("0f 29 44 24 40 0f 29 5c 24 60"));
+        LookupInfo::ProcMangled("?SpawnActor@UWorld@@QEAAPEAVAActor@@PEAVUClass@@PEBUFVector@@PEBUFRotator@@AEBUFActorSpawnParameters@@@Z");
 }
 
 

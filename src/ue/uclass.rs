@@ -19,6 +19,11 @@ pub struct UFieldVTable
     pub uobject: UObjectVTable,
     pub AddCppProperty: unsafe extern "C" fn( obj: *mut UField ),
     pub Bind: unsafe extern "C" fn( obj: *mut UField ),
+
+    #[cfg(feature = "brmk")]
+    pub GetAssociatedFField: unsafe extern "C" fn( obj: *mut UField ),
+    #[cfg(feature = "brmk")]
+    pub SetAssociatedFField: unsafe extern "C" fn( obj: *mut UField ),
 }
 
 #[repr(C)]
@@ -64,6 +69,7 @@ pub struct UStructVTable
 #[derive(Debug, Copy, Clone)]
 pub struct UStruct {
     pub ufield: UField,
+    #[cfg(not(feature = "brmk"))]
     pub fstruct_base_chain: FStructBaseChain,
     pub super_struct: *const UStruct,
     pub children: *const UField,
@@ -76,8 +82,14 @@ pub struct UStruct {
     pub destructor_link: *const FProperty,
     pub post_construct_link: *const FProperty,
     pub script_and_property_object_references: TArray<*const UObject>,
-    pub unresolved_script_properties: *const (), //TODO pub TArray<TTuple<TFieldPath<FField>,int>,TSizedDefaultAllocator<32> >*
-    pub unversioned_schema: *const (),           //TODO const FUnversionedStructSchema*
+    pub unresolved_script_properties: *const (),
+
+    #[cfg(feature = "brmk")]
+    pub property_wrappers: TArray<*mut ()>,
+    #[cfg(feature = "brmk")]
+    pub field_path_serial_number: i32,
+
+    pub unversioned_schema: *const (),
 }
 impl UStruct
 {
@@ -122,6 +134,12 @@ impl UStruct
 pub struct UClassVTable
 {
     pub ustruct: UStructVTable,
+
+    #[cfg(feature = "brmk")]
+    pub ConditionalRecompileClass: unsafe extern "C" fn( obj: *mut UClass ),
+    #[cfg(feature = "brmk")]
+    pub FlushCompilationQueueForLevel: unsafe extern "C" fn( obj: *mut UClass ),
+
     pub GetAuthoritativeClass: unsafe extern "C" fn( obj: *mut UClass ),
     pub PostInitInstance: unsafe extern "C" fn( obj: *mut UClass ),
     pub InitPropertiesFromCustomList: unsafe extern "C" fn( obj: *mut UClass ),
@@ -139,7 +157,7 @@ pub struct UClassVTable
     pub GetArchetypeForCDO: unsafe extern "C" fn( obj: *mut UClass ),
     pub GetArchetypeForSparseClassData: unsafe extern "C" fn( obj: *mut UClass ),
     pub GetDefaultObjectPreloadDependencies: unsafe extern "C" fn( obj: *mut UClass ),
-    pub CreateDefaultObject: unsafe extern "C" fn( obj: *mut UClass ),
+    pub CreateDefaultObject: unsafe extern "C" fn( obj: *mut UClass ) -> *mut UObject,
 }
 
 #[repr(C)]
@@ -150,23 +168,33 @@ pub struct UClass {
     pub ClassVTableHelperCtorCaller: usize,
     pub ClassAddReferencedObjects: usize,
     pub flags: u32,
-    pub ClassFlags1: u64,
-    pub ClassFlags2: u64,
-    pub ClassCastFlags:u64,
+    pub ClassFlags: u32,
+    pub ClassCastFlags: u64,
     pub ClassWithin: *mut UClass,
     pub ClassGeneratedBy: *mut UObject,
+    #[cfg(feature = "brmk")]
+    pub PropertiesPendingDestruction: *mut FField,
     pub ClassConfigName: FName,
+    pub ClassReps: TArray<()>,
     pub NetFields: TArray<*mut UField>,
     pub FirstOwnedClassRep: i32,
     pub ClassDefaultObject: *mut UObject,
     pub SparseClassData: *mut (),
     pub SparseClassDataStruct: *mut (),
+    // TODO:
 }
 
+#[cfg(not(feature = "brmk"))]
 lookup!
 {
     pub const UClass_FindFunctionByName_ptr: unsafe extern "C" fn (cls: *const UClass, name: FName, inherit: u32) -> *mut UFunction = 
         LookupInfo::Binary(-0xD, LookupMode::SignatureStart, sig!("8b 81 38 01 00 00 45 8b f0 48 8b da 48 8b e9"));
+}
+#[cfg(feature = "brmk")]
+lookup!
+{
+    pub const UClass_FindFunctionByName_ptr: unsafe extern "C" fn (cls: *const UClass, name: FName, inherit: u32) -> *mut UFunction = 
+        LookupInfo::ProcMangled("?FindFunctionByName@UClass@@QEBAPEAVUFunction@@VFName@@W4Type@EIncludeSuperFlag@@@Z");
 }
 
 impl UClass

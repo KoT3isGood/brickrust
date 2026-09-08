@@ -13,10 +13,12 @@ use crate::ue::fstring::FString;
 use super::fname::*;
 use super::uclass::*;
 
-pub(crate) type fnStaticConstructObject = unsafe extern "C" fn ( params: FStaticConstructObjectParameters ) -> *mut UObjectBase;
+pub(crate) type fnStaticConstructObject = unsafe extern "C" fn ( params: *mut FStaticConstructObjectParameters ) -> *mut UObjectBase;
 pub(crate) type fnStaticLoadObject = unsafe extern "C" fn
 ( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObject;
 pub(crate) type fnProcessInternal = unsafe extern "C" fn(obj: *mut UObject, stack: *mut FFrame, result: *mut ());
+
+#[cfg(not(feature = "brmk"))]
 lookup!
 {
     pub const StaticConstructObject_Internal: fnStaticConstructObject =
@@ -25,6 +27,16 @@ lookup!
         LookupInfo::Binary(-0x30, LookupMode::SignatureStart, sig!("80 f9 04 74 34 66 66 66 0f 1f 84 00 00 00 00 00 48 ff c0"));
     pub const StaticLoadObject_ptr: fnStaticLoadObject = 
         LookupInfo::Binary(-0x23, LookupMode::SignatureStart, sig!("48 33 c4 48 89 85 80 02 00 00 0f b6 85 10 03 00 00"));
+}
+#[cfg(feature = "brmk")]
+lookup!
+{
+    pub const StaticConstructObject_Internal: fnStaticConstructObject =
+        LookupInfo::ProcMangled("?StaticConstructObject_Internal@@YAPEAVUObject@@AEBUFStaticConstructObjectParameters@@@Z");
+    pub const ProcessInternal_ptr: fnProcessInternal = 
+        LookupInfo::BinaryDll("BrickRigsModKitSteam-CoreUObject.dll", -0x36, LookupMode::SignatureStart, sig!("C7 44 24 24 00 00 00 00 4C 8B 72 10"));
+    pub const StaticLoadObject_ptr: fnStaticLoadObject = 
+        LookupInfo::ProcMangled("?StaticLoadObject@@YAPEAVUObject@@PEAVUClass@@PEAV1@PEB_W2IPEAVUPackageMap@@_NPEBVFLinkerInstancingContext@@@Z");
 }
 
 pub(crate) static mut StaticConstructObject_Internal_hook: Option<fnStaticConstructObject> = None;
@@ -126,9 +138,15 @@ impl FUObjectArray
 
 }
 
+#[cfg(not(feature = "brmk"))]
 lookup! {
     pub const GOBJECTS_PTR: *mut FUObjectArray = 
         LookupInfo::Binary(8, LookupMode::Offset32, sig!("0F AF EA 41 FF C9"));
+}
+#[cfg(feature = "brmk")]
+lookup! {
+    pub const GOBJECTS_PTR: *mut FUObjectArray = 
+        LookupInfo::ProcMangled("?GUObjectArray@@3VFUObjectArray@@A");
 }
 pub unsafe fn GObjects() -> &'static mut FUObjectArray
 {
@@ -204,16 +222,51 @@ pub struct UObjectVTable
     pub PreSaveRoot: unsafe extern "C" fn( obj: *mut UObject ),
     pub PostSaveRoot: unsafe extern "C" fn( obj: *mut UObject ),
     pub PreSave: unsafe extern "C" fn( obj: *mut UObject ),
+
+    #[cfg(feature = "brmk")]
+    pub Modify: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub LoadedFromAnotherClass: unsafe extern "C" fn( obj: *mut UObject ),
+
     pub IsReadyForAsyncPostLoad: unsafe extern "C" fn( obj: *mut UObject ),
     pub PostLoad: unsafe extern "C" fn( obj: *mut UObject ),
     pub PostLoadSubobjects: unsafe extern "C" fn( obj: *mut UObject ),
     pub BeginDestroy: unsafe extern "C" fn( obj: *mut UObject ),
     pub IsReadyForFinishDestroy: unsafe extern "C" fn( obj: *mut UObject ),
+
+    #[cfg(feature = "brmk")]
+    pub PostLinkerChange: unsafe extern "C" fn( obj: *mut UObject ),
+
     pub FinishDestroy: unsafe extern "C" fn( obj: *mut UObject ),
     pub Serialize__FStructuredArchiveRecord: unsafe extern "C" fn( obj: *mut UObject ),
     pub Serialize__Ref_FArchive: unsafe extern "C" fn( obj: *mut UObject ),
     pub ShutdownAfterError: unsafe extern "C" fn( obj: *mut UObject ),
     pub PostInterpChange: unsafe extern "C" fn( obj: *mut UObject ),
+
+    #[cfg(feature = "brmk")]
+    pub PreEditChange1: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub PreEditChange2: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub CanEditChange: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub PostEditChangeProperty: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub PostEditChangeChainProperty: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub PreEditUndo: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub PostEditUndo1: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub PostEditUndo2: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub PostTransacted: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub FactoryTransactionAnnotation: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub IsSelectedInEditor: unsafe extern "C" fn( obj: *mut UObject ),
+
+
     pub PostRename: unsafe extern "C" fn( obj: *mut UObject ),
     pub PreDuplicate: unsafe extern "C" fn( obj: *mut UObject ),
     pub PostDuplicate__EDuplicateMode_Type: unsafe extern "C" fn( obj: *mut UObject ),
@@ -235,6 +288,10 @@ pub struct UObjectVTable
     pub Rename: unsafe extern "C" fn( obj: *mut UObject ),
     pub GetDesc: unsafe extern "C" fn( obj: *mut UObject ),
     pub GetSparseClassDataStruct: unsafe extern "C" fn( obj: *mut UObject ),
+
+    #[cfg(feature = "brmk")]
+    pub MoveDataToSparseClassDataStruct: unsafe extern "C" fn( obj: *mut UObject ),
+
     pub GetWorld: unsafe extern "C" fn( obj: *mut UObject ),
     pub GetNativePropertyValues: unsafe extern "C" fn( obj: *mut UObject ),
     pub GetResourceSizeEx: unsafe extern "C" fn( obj: *mut UObject ),
@@ -243,6 +300,10 @@ pub struct UObjectVTable
     pub AreNativePropertiesIdenticalTo: unsafe extern "C" fn( obj: *mut UObject ),
     /* syka blyat */
     pub GetAssetRegistryTags_C__Ref_TArray_UObject_FAssetRegistryTag_TSizedDefaultAllocator_32_: unsafe extern "C" fn( obj: *mut UObject ),
+
+    #[cfg(feature = "brmk")]
+    pub GetAssetRegistryTagMetadata: unsafe extern "C" fn( obj: *mut UObject ),
+
     pub IsAsset: unsafe extern "C" fn( obj: *mut UObject ),
     pub GetPrimaryAssetId: unsafe extern "C" fn( obj: *mut UObject ),
     pub IsLocalizedResource: unsafe extern "C" fn( obj: *mut UObject ),
@@ -257,6 +318,24 @@ pub struct UObjectVTable
     pub PostNetReceive: unsafe extern "C" fn( obj: *mut UObject ),
     pub PostRepNotifies: unsafe extern "C" fn( obj: *mut UObject ),
     pub PreDestroyFromReplication: unsafe extern "C" fn( obj: *mut UObject ),
+
+    #[cfg(feature = "brmk")]
+    pub IsDataValid: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub BeginCacheForCookedPlatformData: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub IsCachedCookedPlatformDataLoaded: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub WillNeverCacheCookedPlatformDataAgain: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub ClearCachedCookedPlatformData: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub ClearAllCachedCookedPlatformData: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub CookAdditionalFiles: unsafe extern "C" fn( obj: *mut UObject ),
+    #[cfg(feature = "brmk")]
+    pub CookAdditionalFilesOverride: unsafe extern "C" fn( obj: *mut UObject ),
+
     pub BuildSubobjectMapping: unsafe extern "C" fn( obj: *mut UObject ),
     pub GetConfigOverridePlatform: unsafe extern "C" fn( obj: *mut UObject ),
     pub OverridePerObjectConfigSection: unsafe extern "C" fn( obj: *mut UObject ),
@@ -411,9 +490,9 @@ impl UObject
         let mut cls = self.class_private;
         loop 
         {
-            br_print!("{}", (*cls).ustruct.ufield.uobject.name_private);
-            cls = (*cls).ustruct.super_struct as *const UClass;
             if cls.is_null() { break; }
+            br_print!("class  {}", (*cls).ustruct.ufield.uobject.name_private);
+            cls = (*cls).ustruct.super_struct as *const UClass;
         }
     }
     pub unsafe fn dump_outer(&self)
@@ -421,9 +500,9 @@ impl UObject
         let mut cls = self.outer_private;
         loop 
         {
-            br_print!("{}", (*cls).name_private);
-            cls = (*cls).outer_private;
             if cls.is_null() { break; }
+            br_print!("outer  {}", (*cls).name_private);
+            cls = (*cls).outer_private;
         }
     }
 

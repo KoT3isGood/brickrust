@@ -7,11 +7,19 @@ use core::mem::transmute;
 use brickrust_macros::sig;
 use brickworks::patterns::*;
 
+#[cfg(not(feature = "brmk"))]
 lookup! {
     pub const GetEnabledModNames_ptr: unsafe extern "C" fn ( out_names: *mut TArray<FString> ) = 
         LookupInfo::Binary(-0x32, LookupMode::SignatureStart, sig!("4c 8b 42 68 48 8d 55 ?? 41 ff d0 48 8d 4d ??"));
     pub const GetEnabledModsHash_ptr: unsafe extern "C" fn () -> i32 = 
         LookupInfo::Binary(-0x18, LookupMode::SignatureStart, sig!("45 33 ff 48 8d 4c 24 20 41 8b f7"));
+}
+#[cfg(feature = "brmk")]
+lookup! {
+    pub const GetEnabledModNames_ptr: unsafe extern "C" fn ( out_names: *mut TArray<FString> ) = 
+        LookupInfo::ProcMangled("?GetEnabledModNames@UBrickGameInstance@@SAXAEAV?$TArray@VFString@@V?$TSizedDefaultAllocator@$0CA@@@@@@Z");
+    pub const GetEnabledModsHash_ptr: unsafe extern "C" fn () -> i32 = 
+        LookupInfo::ProcMangled("?GetEnabledModsHash@UBrickGameInstance@@SAHXZ");
 }
 
 /**

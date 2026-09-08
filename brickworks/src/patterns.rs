@@ -1,7 +1,5 @@
 use std::ffi::CString;
-use crate::br_print;
-#[cfg(feature = "brmk")]
-use crate::brmk::*;
+use crate::{br_print, set_module_name};
 pub use inventory;
 pub use brickrust_macros::sig;
 pub use crate::lookup;
@@ -80,12 +78,13 @@ pub unsafe fn lookup_offset( addr: *const u8, offset: isize, mode: LookupMode) -
 pub enum LookupInfo
 {
     Binary(isize, LookupMode, Signature),
+    BinaryDll(&'static str, isize, LookupMode, Signature),
     Proc(&'static str),
     ProcMangled(&'static str),
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct CSignature {
     pub num: usize,
     pub bytes: *const u8,
@@ -94,6 +93,7 @@ pub struct CSignature {
 unsafe extern "C"
 {
     pub fn brickworks_binary_lookup( offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8;
+    pub fn brickworks_binary_dll_lookup( dll: *const u8, offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8;
     pub fn brickworks_cpp_lookup( cpp: *const u8 ) -> *const u8;
 }
 
@@ -157,6 +157,16 @@ pub unsafe fn do_lookup()
                     mask: sig.mask.as_ptr(),
                 };
                 *look.ptr = brickworks_binary_lookup(*offset, *mode, sign);
+            }
+            LookupInfo::BinaryDll(dll, offset, mode, sig) =>
+            {
+                let sign = CSignature {
+                    num: sig.bytes.len(),
+                    bytes: sig.bytes.as_ptr(),
+                    mask: sig.mask.as_ptr(),
+                };
+                let st = CString::new(*dll).unwrap();
+                *look.ptr = brickworks_binary_dll_lookup(st.as_ptr() as *const u8,*offset, *mode, sign);
             }
             LookupInfo::Proc(s) =>
             {

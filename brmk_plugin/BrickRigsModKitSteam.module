@@ -1,0 +1,7 @@
+{
+	"BuildId": "1.0",
+	"Modules":
+	{
+		"BrickRust": "BrickRigsModKitSteam-BrickRust.dll"
+	}
+}

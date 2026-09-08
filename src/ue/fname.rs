@@ -2,11 +2,19 @@
 
 use std::{collections::HashMap, ptr::slice_from_raw_parts};
 
+use brickworks::br_print;
 use brickworks::patterns::*;
 
+#[cfg(not(feature = "brmk"))]
 lookup! {
     pub const GNAMES_PTR: *mut FNamePool = 
         LookupInfo::Binary(5, LookupMode::Offset32, sig!("74 09 48 8D 15 ? ? ? ? EB 16"));
+}
+#[cfg(feature = "brmk")]
+lookup!
+{
+    pub const GNAMES_PTR: *mut FNamePool = 
+        LookupInfo::BinaryDll("BrickRigsModKitSteam-Core.dll", 5, LookupMode::Offset32, sig!("74 09 48 8D 15 ? ? ? ? EB 16"));
 }
 #[allow(nonstandard_style)]
 pub unsafe fn GNames() -> &'static mut FNamePool
@@ -21,15 +29,17 @@ set_module_name!(b"fname\0");
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct FNamePoolFNameEntry
+pub struct FNameEntry
 {
-    pub key: i16,
+    #[cfg(feature = "brmk")]
+    pub comparison_id: u32,
+    pub key: u16,
     pub name: [u8; 1024]
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct FNamePoolFNameEntryAllocator
+pub struct FNamePoolAllocator
 {
     frw_lock: u64,
     pub current_block: i32,
@@ -41,20 +51,20 @@ pub struct FNamePoolFNameEntryAllocator
 #[derive(Debug,Copy, Clone)]
 pub struct FNamePool
 {
-    pub allocator: FNamePoolFNameEntryAllocator,
+    pub allocator: FNamePoolAllocator,
     pub ansi_count: u32,
     pub wide_count: u32,
 }
 
 impl FNamePool
 {
-    unsafe fn get_entry(&self, ci: u32) -> *const FNamePoolFNameEntry
+    unsafe fn get_entry(&self, ci: u32) -> *const FNameEntry
     {
         let block: u32 = ci>>16;
         let block = block as usize;
         let offset = ci as u16;
         let offset = offset as usize;
-        self.allocator.blocks[block].add(offset*2) as *const FNamePoolFNameEntry
+        self.allocator.blocks[block].add(offset*FName::NAME_ENTRY_STRIDE) as *const FNameEntry
     }
 }
 
@@ -63,6 +73,8 @@ impl FNamePool
 #[derive(Debug, Copy, Clone, Default)]
 pub struct FName {
     pub comparison_index: u32,
+    #[cfg(feature = "brmk")]
+    pub display_index: u32,
     pub number: u32,
 }
 
@@ -108,10 +120,19 @@ unsafe extern "C"
     pub fn memcpy( l: *const u8, r: *const u8, c: usize ) -> i32;
 }
 
-const BLOCK_SIZE: usize = 2 * 1 << 16;
 
 impl FName
 {
+    pub const BLOCK_SIZE: usize = 2 * 1 << 16;
+    #[cfg(feature="brmk")]
+    const LENGTH_OFFSET: u8 = 1;
+    #[cfg(not(feature = "brmk"))]
+    const LENGTH_OFFSET: u8 = 6;
+    #[cfg(feature = "brmk")]
+    const NAME_ENTRY_HEADER_SIZE: usize = 6;
+    #[cfg(not(feature = "brmk"))]
+    const NAME_ENTRY_HEADER_SIZE: usize = 2;
+    const NAME_ENTRY_STRIDE: usize = align_of::<FNameEntry>();
     pub unsafe fn equals_str(&self, str: &'static str) -> bool
     {
         let (ptr, len) = self.as_sptr();
@@ -125,18 +146,19 @@ impl FName
         }
         return true;
     }
-    pub unsafe fn as_sptr(&self) -> (*const u8, i16)
+    pub unsafe fn as_sptr(&self) -> (*const u8, u16)
     {
         let entry = GNames().get_entry(self.comparison_index);
-        let len = (*entry).key >> 6;
+        let len = (*entry).key >> FName::LENGTH_OFFSET;
         return ((*entry).name.as_ptr(), len);
     }
-    pub unsafe fn as_sptr2(&self) -> (*const u8, i16, bool)
+    pub unsafe fn as_sptr2(&self) -> (*const u8, u16, bool)
     {
         let entry = GNames().get_entry(self.comparison_index);
-        let len = (*entry).key >> 6;
+        let len = (*entry).key >> FName::LENGTH_OFFSET;
         return ((*entry).name.as_ptr(), len, (*entry).key & 0x1 != 0);
     }
+
     unsafe fn block_search_str( s: &'static str, block: *const u8, size: usize ) -> Option<FName>
     {
         let mut it = block;
@@ -144,9 +166,9 @@ impl FName
         let end = it.add(size).sub(2); 
         while it < end
         {
-            let entry = it as *const FNamePoolFNameEntry;
+            let entry = it as *const FNameEntry;
 
-            let len = (*entry).key as u16 >> 6;
+            let len = (*entry).key as u16 >> FName::LENGTH_OFFSET;
             if len == 0 { return None; }
             let len = len as usize;
 
@@ -156,32 +178,37 @@ impl FName
                 break;
             }
 
-            let binarylen = binarylen+2;
+            let binarylen = binarylen+FName::NAME_ENTRY_HEADER_SIZE;
             if (*entry).key & 0x1 != 0
             {
                 it = it.add(binarylen);
-                it = it.add(it.align_offset(2));
+                it = it.add(it.align_offset(FName::NAME_ENTRY_STRIDE));
                 continue;
             }
 
             if len != s.len() { 
                 it = it.add(binarylen);
-                it = it.add(it.align_offset(2));
+                it = it.add(it.align_offset(FName::NAME_ENTRY_STRIDE));
                 continue 
             }
             let slc = slice_from_raw_parts((*entry).name.as_ptr(), len);
             let _st = str::from_utf8_unchecked(&*slc);
             if memcmp(s.as_ptr(), (*entry).name.as_ptr(), len) == 0
             {
-                let idx = (it.offset_from(start) as usize / 2) as u32;
-                return Some(FName { comparison_index: idx, number: 0 })
+                let idx = (it.offset_from(start) as usize / FName::NAME_ENTRY_STRIDE) as u32;
+                return Some(
+                    FName { 
+                        comparison_index: idx,
+                        #[cfg(feature = "brmk")]
+                        display_index: idx,
+                        number: 0 })
             }
             it = it.add(binarylen);
-            it = it.add(it.align_offset(2));
+            it = it.add(it.align_offset(FName::NAME_ENTRY_STRIDE));
         }
         None
     }
-
+ 
     /**
      * Finds FName from string
      *
@@ -193,7 +220,7 @@ impl FName
         let current_block = GNames().allocator.current_block as usize;
         for i in 0..GNames().allocator.current_block as usize
         {
-            let n = FName::block_search_str(s, blocks[i], BLOCK_SIZE );
+            let n = FName::block_search_str(s, blocks[i], FName::BLOCK_SIZE );
             if n.is_some()
             {
                 let mut n = n.unwrap();
@@ -245,11 +272,15 @@ impl FName
         let blocks = GNames().allocator.blocks;
         let current_block = GNames().allocator.current_block as usize;
         let cursor = GNames().allocator.current_block_cursor;
-        let name = blocks[current_block].add(cursor as usize);
-        *(name as *mut u16) = (s.len() as u16) << 6;
-        core::ptr::copy_nonoverlapping(s.as_ptr(), name.add(2) as *mut u8, s.len());
-        let aligned_len = if s.len() % 2 == 1 { s.len() + 1 } else {s.len()};
-        GNames().allocator.current_block_cursor += 2 + aligned_len as i32;
+        let name = blocks[current_block].add(cursor as usize) as *mut FNameEntry;
+        #[cfg(feature = "brmk")]
+        {
+            (*name).comparison_id = 0;
+        }
+        (*name).key = (s.len() as u16) << FName::LENGTH_OFFSET;
+        core::ptr::copy_nonoverlapping(s.as_ptr(), &mut (*name).name as *mut u8, s.len());
+        let len = FName::NAME_ENTRY_HEADER_SIZE+s.len();
+        GNames().allocator.current_block_cursor += len.next_multiple_of(FName::NAME_ENTRY_STRIDE) as i32;
 
     }
 
@@ -260,18 +291,23 @@ impl FName
         let cursor = GNames().allocator.current_block_cursor;
         let end = cursor as usize + s.len() + 2; 
         let blocks = &mut GNames().allocator.blocks;
-        if end > BLOCK_SIZE
+        if end > FName::BLOCK_SIZE
         {
             GNames().allocator.current_block_cursor = 0;
             GNames().allocator.current_block += 1;
             let current_block = GNames().allocator.current_block as usize;
-            blocks[current_block] = fmalloc::malloc(BLOCK_SIZE) as *const u8;
+            blocks[current_block] = fmalloc::malloc(FName::BLOCK_SIZE) as *const u8;
 
         }
         let current_block = GNames().allocator.current_block as u32;
         let cursor = GNames().allocator.current_block_cursor as u32;
         FName::write_new_str(s);
-        return FName { comparison_index: (current_block<<16)+cursor/2, number: 0 };
+        let idx = (current_block<<16)+cursor/(FName::NAME_ENTRY_STRIDE as u32);
+        return FName { 
+            comparison_index: idx, 
+            #[cfg(feature = "brmk")]
+            display_index: idx,
+            number: 0 };
     }
 
     pub unsafe fn new( s: &'static str ) -> FName
@@ -288,5 +324,7 @@ impl FName
 
 pub const NAME_NONE: FName = FName {
     comparison_index: 0,
+    #[cfg(feature = "brmk")]
+    display_index: 0,
     number: 0,
 };

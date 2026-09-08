@@ -91,7 +91,7 @@ mod brickrust;
 
 use brickworks::br_print;
 use brickworks::set_module_name;
-use brickworks::hookmgr;
+use brickworks::iface::*;
 
 use ue::coreuobject::*;
 use ue::*;
@@ -131,29 +131,31 @@ pub unsafe fn init()
     static mut INITED: bool = false;
     if INITED { return; }
     INITED = true;
-
-
+    br_print!("brickrust");
     init_signatures();
     blueprint::init();
 }
 
-pub unsafe fn hook_construct_uobject( f: unsafe fn( params: FStaticConstructObjectParameters, obj: *mut UObjectBase ) )
+pub unsafe fn hook_construct_uobject( f: unsafe fn( params: *mut FStaticConstructObjectParameters, obj: *mut UObjectBase ) )
 {
-    hookmgr::add_posthook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
+    brickworks_add_posthook(StaticConstructObject_Internal.unwrap() as *const (), f as *const ());
 }
 pub unsafe fn hook_load_uobject( f: unsafe fn( obj: *mut UObjectBase, class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32 ) )
 {
-    hookmgr::add_posthook(StaticLoadObject_ptr.unwrap() as *const (), f as *const ());
+    #[cfg(not(feature = "brmk"))]
+    brickworks_add_posthook(StaticLoadObject_ptr.unwrap() as *const (), f as *const ());
 }
 
 pub unsafe fn hook_post_engine_init( f: unsafe fn() )
 {
-    hookmgr::add_posthook(UEngine_Init_ptr.unwrap() as *const (), f as *const ());
+    #[cfg(not(feature = "brmk"))]
+    brickworks_add_posthook(UEngine_Init_ptr.unwrap() as *const (), f as *const ());
 }
 
 pub unsafe fn hook_post_load_map( f: unsafe fn() )
 {
-    hookmgr::add_posthook(UEngine_LoadMap_ptr.unwrap() as *const (), f as *const ());
+    #[cfg(not(feature = "brmk"))]
+    brickworks_add_posthook(UEngine_LoadMap_ptr.unwrap() as *const (), f as *const ());
 }
 
 /**

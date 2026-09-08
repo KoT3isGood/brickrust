@@ -10,7 +10,7 @@ version = "0.0.5+br1.11.5"
 publish = true
 
 [features]
-default=["br_1_11"]
+default=[]
 brmk=["brmk_1_10_7", "brickworks/brmk"]
 
 br_1_11=["br_symbols_1_11"]
@@ -22,12 +22,12 @@ br_symbols_1_10_7=[]
 brmk_symbols_1_10_7=[]
 
 [workspace]
-members = [ "macros", "brickworks", "xinput_proxy" ]
+members = [ "macros", "brickworks", "xinput_proxy" , "brmk_plugin", "brickworks_impl"]
 
 [dependencies]
 bitflags= "2.13.1"
 brickrust_macros = { version = "0.0.2", path = "macros" }
-brickworks = { version = "0.0.5", path = "brickworks" }
+brickworks = { version = "0.1.0", path = "brickworks" }
 min_hook_rs = "2.2.1"
 inventory = "0.3.24"
 wchar = "0.11.1"

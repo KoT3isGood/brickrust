@@ -20,9 +20,16 @@ impl FText
     }
 }
 
+#[cfg(not(feature = "brmk"))]
 lookup!
 {
     pub const Conv_StringToText: unsafe extern "C" fn (a: *const FString) -> FText = 
         LookupInfo::Binary(23, LookupMode::Offset32, sig!("74 41 48 8d 54 24 20 48 8b c8 e8 ?? ?? ?? ?? 48 8b d0 48 8d 4c 24 30"));
+}
+#[cfg(feature = "brmk")]
+lookup!
+{
+    pub const Conv_StringToText: unsafe extern "C" fn (a: *const FString) -> FText = 
+        LookupInfo::ProcMangled("?Conv_StringToText@UKismetTextLibrary@@SA?AVFText@@AEBVFString@@@Z");
 }
 

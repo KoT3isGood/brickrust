@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "BrickRust",
+	"Description": "BrickRust plugin for Unreal Engine",
+	"Category": "Scripting",
+	"CreatedBy": "BrickRust",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "BrickRust",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}

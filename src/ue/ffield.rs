@@ -1,3 +1,8 @@
+#[cfg(feature = "brmk")]
+use crate::ue::fstring::FString;
+#[cfg(feature = "brmk")]
+use crate::ue::tmap::TMap;
+
 use super::coreuobject::{EObjectFlags, UObjectBase};
 use super::fname::FName;
 use core::fmt;
@@ -45,4 +50,6 @@ pub struct FField {
     pub next: *const FField,
     pub name_private: FName,
     pub flags_private: EObjectFlags,
+    #[cfg(feature = "brmk")]
+    pub metadata_map: *mut TMap<FName, FString>,
 }

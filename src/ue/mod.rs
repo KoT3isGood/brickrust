@@ -25,9 +25,10 @@ pub mod gcobject;
 pub mod delegate;
 
 use brickworks::br_print;
+use brickworks::iface::*;
 use brickworks::lookup;
 use brickworks::patterns::*;
-use brickworks::hookmgr;
+use brickworks::iface;
 use brickrust_macros::sig;
 use brickworks::set_module_name;
 use coreuobject::*;
@@ -40,10 +41,14 @@ set_module_name!(b"ue\0");
 static mut UEngine_Init_hook: Option<unsafe extern "C" fn (a: *mut (), b: *mut ())> = None;
 static mut UEngine_LoadMap_hook: Option<unsafe extern "C" fn (a: *mut (), b: *mut (), c: *mut (), d: *mut (), e: *mut ()) -> bool> = None;
 
+#[cfg(not(feature = "brmk"))]
 unsafe extern "C" fn static_load( class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32, reconciliation: bool ) -> *mut UObjectBase
 {
     let uobject = (StaticLoadObject_hook.unwrap())(class, in_outer, inname, filename, flags, reconciliation);
-    let (subhooks, count) = hookmgr::get_posthooks(
+    let subhooks = brickworks_get_posthooks(
+        transmute(StaticLoadObject_ptr.unwrap())
+    );
+    let count = brickworks_get_posthook_count(
         transmute(StaticLoadObject_ptr.unwrap())
     );
     let subhooks: *const unsafe fn( obj: *mut UObjectBase, class: *mut UClass, in_outer: *mut UObject, inname: *const u16, filename: *const u16, flags: u32 ) = transmute(subhooks);
@@ -54,24 +59,31 @@ unsafe extern "C" fn static_load( class: *mut UClass, in_outer: *mut UObject, in
     return uobject;
 }
 
-unsafe extern "C" fn static_construct( params: FStaticConstructObjectParameters ) -> *mut UObjectBase
+unsafe extern "C" fn static_construct( params: *mut FStaticConstructObjectParameters ) -> *mut UObjectBase
 {
     let uobject = (StaticConstructObject_Internal_hook.unwrap())(params);
-    let (subhooks, count) = hookmgr::get_posthooks(
+    let subhooks = brickworks_get_posthooks(
         transmute(StaticConstructObject_Internal.unwrap())
     );
-    let subhooks: *const unsafe fn( params: FStaticConstructObjectParameters, obj: *mut UObjectBase ) = transmute(subhooks);
+    let count = brickworks_get_posthook_count(
+        transmute(StaticConstructObject_Internal.unwrap())
+    );
+    let subhooks: *const unsafe fn( params: *mut FStaticConstructObjectParameters, obj: *mut UObjectBase ) = transmute(subhooks);
     for i in 0..count
     {
         (*subhooks.add(i))(params, uobject);
     }
     return uobject;
 }
+#[cfg(not(feature = "brmk"))]
 unsafe extern "C" fn engine_init(a: *mut (), b: *mut ())
 {
     (UEngine_Init_hook.unwrap())(a, b);
 
-    let (subhooks, count) = hookmgr::get_posthooks(
+    let subhooks = brickworks_get_posthooks(
+        transmute(UEngine_Init_ptr.unwrap())
+    );
+    let count = brickworks_get_posthook_count(
         transmute(UEngine_Init_ptr.unwrap())
     );
 
@@ -82,11 +94,15 @@ unsafe extern "C" fn engine_init(a: *mut (), b: *mut ())
     }
 }
 
+#[cfg(not(feature = "brmk"))]
 unsafe extern "C" fn engine_loadmap(a: *mut (), b: *mut (), c: *mut (), d: *mut (), e: *mut ()) -> bool
 {
     let r = (UEngine_LoadMap_hook.unwrap())(a, b, c, d, e);
 
-    let (subhooks, count) = hookmgr::get_posthooks(
+    let subhooks = brickworks_get_posthooks(
+        transmute(UEngine_LoadMap_ptr.unwrap())
+    );
+    let count = brickworks_get_posthook_count(
         transmute(UEngine_LoadMap_ptr.unwrap())
     );
 
@@ -152,6 +168,7 @@ unsafe fn engine_load()
     }
 }
 
+#[cfg(not(feature = "brmk"))]
 lookup! {
     pub const UEngine_Init_ptr: unsafe extern "C" fn (a: *mut (), b: *mut ()) = 
         LookupInfo::Binary(-0x10, LookupMode::SignatureStart, sig!("48 8d 6c 24 d9 48 81 ec 00 01 00 00 4c 8b f1"));
@@ -161,51 +178,55 @@ lookup! {
 
 pub(crate) unsafe fn init_signatures()
 {
-    UEngine_Init_hook = Some(
-        transmute(
-            hookmgr::hook(
-                UEngine_Init_ptr.unwrap() as *const _, 
-                engine_init as *const _
-            )
-        )
-    );
-
-    br_print!("{:#?}", UEngine_Init_ptr.unwrap());
-    UEngine_LoadMap_hook = Some(
-        transmute(
-            hookmgr::hook(
-                UEngine_LoadMap_ptr.unwrap() as *const _, 
-                engine_loadmap as *const _
-            )
-        )
-    );
-
     StaticConstructObject_Internal_hook = Some(
         transmute(
-            hookmgr::hook(
+            brickworks_create_hook(
                 StaticConstructObject_Internal.unwrap() as *const _, 
                 static_construct as *const _
             )
         )
     );
-
-    StaticLoadObject_hook = Some(
-        transmute(
-            hookmgr::hook(
-                StaticLoadObject_ptr.unwrap() as *const _, 
-                static_load as *const _
-            )
-        )
-    );
-
+    /*
     ProcessInternal_hook = Some(
         transmute(
-            hookmgr::hook(
+            brickworks_create_hook(
                 ProcessInternal_ptr.unwrap() as *const _, 
                 process_internal as *const _
             )
         )
     );
+    */
 
+    #[cfg(not(feature = "brmk"))]
+    {
+        UEngine_Init_hook = Some(
+            transmute(
+                brickworks_create_hook(
+                    UEngine_Init_ptr.unwrap() as *const _, 
+                    engine_init as *const _
+                )
+            )
+        );
+        UEngine_LoadMap_hook = Some(
+            transmute(
+                brickworks_create_hook(
+                    UEngine_LoadMap_ptr.unwrap() as *const _, 
+                    engine_loadmap as *const _
+                )
+            )
+        );
+        StaticLoadObject_hook = Some(
+            transmute(
+                brickworks_create_hook(
+                    StaticLoadObject_ptr.unwrap() as *const _, 
+                    static_load as *const _
+                )
+            )
+        );
+
+    }
+
+
+    #[cfg(not(feature = "brmk"))]
     hook_post_engine_init(engine_load);
 }

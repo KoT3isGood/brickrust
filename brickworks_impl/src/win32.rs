@@ -1,8 +1,10 @@
 
 use core::{ffi::*, mem::zeroed};
-use crate::brickworks_init;
-use crate::brickworks_deinit;
+use crate::win_universal::brickworks_init;
+use crate::win_universal::brickworks_deinit;
 use crate::patterns::*;
+use brickworks::br_print;
+use brickworks::set_module_name;
 use min_hook_rs::*;
 
 type BOOL = i32;
@@ -48,7 +50,6 @@ unsafe extern "system" fn DllMain(
             BASE_ADDRESS = modinfo.base;
             BASE_SIZE = modinfo.size as usize;
             
-            
             brickworks_init();
         }
         DLL_PROCESS_DETACH => {
@@ -85,29 +86,44 @@ pub unsafe fn get_base_size() -> usize
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn brickworks_binary_lookup( offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8
+unsafe extern "C" fn brickworks_binary_lookup( offset: isize, mode: LookupMode, sign: CSignature ) -> *const u8
 {
     let data_len: usize = get_base_size();
     let data: *const u8 = get_base_address();
     let addr = lookup_data(data, data_len, sign);
     lookup_offset(addr, offset, mode)
 }
-
 #[no_mangle]
-pub unsafe extern "C" fn brickworks_cpp_lookup( cpp: *const u8 ) -> *const u8
+unsafe extern "C" fn brickworks_binary_dll_lookup( _dll: *const u8, _offset: isize, _mode: LookupMode, _sign: CSignature ) -> *const u8
 {
-    core::ptr::null()
+    unreachable!("brickworks_binary_dll_lookup is not implemented for WIN64")
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn brickworks_hook_internal( f: *const (), new_fn: *const() ) -> *const ()
+unsafe extern "C" fn brickworks_cpp_lookup( _cpp: *const u8 ) -> *const u8
 {
-    let r = create_hook( f as *mut c_void, new_fn as *mut c_void );
+    unreachable!("brickworks_cpp_lookup is not implemented for WIN64")
+}
+
+#[no_mangle]
+unsafe extern "C" fn brickworks_hook_internal( old_fn: *const (), new_fn: *const() ) -> *const ()
+{
+    let r = create_hook( old_fn as *mut c_void, new_fn as *mut c_void );
     if r.is_err() { return core::ptr::null(); }
     let f = r.unwrap();
 
-    let r = enable_hook(f as *mut c_void);
+    let r = enable_hook( old_fn as *mut c_void );
     if r.is_err() { return core::ptr::null(); }
 
     core::mem::transmute(f)
+}
+
+unsafe extern "C"
+{
+    fn fopen( path: *const u8, mode: *const u8 ) -> *mut ();
+    fn fclose( stream: *mut () ) -> i32;
+    fn fprintf( stream: *mut (), format: *const u8, ... ) -> i32;
+    fn fflush( stream: *mut () ) -> i32;
+    fn _lock_file( stream: *mut () );
+    fn _unlock_file( stream: *mut () );
 }

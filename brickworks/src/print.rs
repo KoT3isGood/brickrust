@@ -93,8 +93,7 @@ macro_rules! set_module_name {
         #[allow(non_snake_case)]
         unsafe fn BrickRust_print( str: *const u8 )
         {
-            use $crate::logger;
-            logger::brickworks_puts(
+            $crate::iface::brickworks_puts(
                 $name.as_ptr(),
                 str
                 );
@@ -102,17 +101,23 @@ macro_rules! set_module_name {
         
     };
 }
+unsafe extern "system"
+{
+    pub fn OutputDebugStringA( s: *const u8);
+}
 
 #[macro_export]
 macro_rules! br_print {
     ($($arg:tt)*) => {{
         use core::fmt::Write;
         use $crate::print::Buffer;
+        use $crate::print::OutputDebugStringA;
 
         let mut buf = Buffer::new();
         let _ = write!(&mut buf, "{}\0", core::format_args!($($arg)*));
 
         unsafe {
+            OutputDebugStringA(buf.ptr as *const u8);
             BrickRust_print(buf.ptr as *const u8);
         }
     }};

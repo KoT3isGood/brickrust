@@ -1,23 +1,23 @@
 [package]
-name = "brickworks"
-edition = "2021"
+name = "brickworks_impl"
 version = "0.1.0"
-license = "MIT"
-description = "Brick Rigs mod loader"
-repository = "https://github.com/KoT3isGood/brickrust"
-publish = true
+edition = "2021"
 
 [dependencies]
-libloading = "0.9"
+brickworks = {version = "0.1.0", path = "../brickworks"}
 brickrust_macros = { version = "0.0.2", path = "../macros" }
+libloading = "0.9"
 min_hook_rs = "2.2.1"
 inventory = "0.3.24"
 
-[features]
-brmk=[]
-
 [lib]
-crate-type = ["rlib"]
+name = "brickworks"
+crate-type = ["cdylib" ]
+
+[features]
+default=[]
+brmk=[]
+impl=[]
 
 [package.metadata.docs.rs]
 targets = ["x86_64-pc-windows-gnu"]

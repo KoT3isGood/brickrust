@@ -18,36 +18,42 @@ else
 TARGET=$(TARGET_RELEASE)
 endif
 
-CARGO_TARGET = --target x86_64-pc-windows-gnu
+CARGO_TARGET = --target x86_64-pc-windows-gnu --workspace
 
 doc:
 	cargo doc $(CARGO_TARGET) --examples
 
 ifeq ($(dev),true)
 build:
-	cargo build $(CARGO_TARGET) --target x86_64-pc-windows-gnu
+	cargo build $(CARGO_TARGET) --features=brickworks_impl/impl
+build_brmk:
+	cargo build $(CARGO_TARGET) --features=brmk,brickworks_impl/impl
 else
 build:
-	cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu
+	cargo build $(CARGO_TARGET) -r --features=brickworks_impl/impl
 build_brmk:
-	cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu --features=brmk
+	cargo build $(CARGO_TARGET) -r --features=brmk,brickworks_impl/impl
 endif
 
 ifdef DIR
+PLUGIN_DIR = $(DIR)/BrickRigs/Plugins/BrickRust
 
 xinput: 
 	cd xinput_proxy && cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu
 
 install: xinput build
-	cp "$(TARGET)/deps/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
-	cp "$(TARGET)/deps/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
+	cp "$(TARGET)/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
+	cp "$(TARGET)/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	cp "$(MINGW)/libgcc_s_seh-1.dll" "$(DIR)" 
 	cp "$(MINGW)/libwinpthread-1.dll" "$(DIR)" 
 	mkdir -p "$(DIR)/brickworks"
 
 install_brmk: build_brmk
-	mkdir -p "$(DIR)/BrickRigs/Plugins/BrickRust/Binaries/Win64"
-	cp "$(TARGET)/deps/brickworks.dll" "$(DIR)/BrickRigs/Plugins/BrickRust/Binaries/Win64/BrickRigsModKitSteam-BrickRust.dll" 
+	mkdir -p "$(PLUGIN_DIR)/Binaries/Win64"
+	cp "$(TARGET)/brmk_plugin.dll" "$(PLUGIN_DIR)/Binaries/Win64/BrickRigsModKitSteam-BrickRust.dll" 
+	cp "brmk_plugin/BrickRigsModKitSteam.module" "$(PLUGIN_DIR)/Binaries/Win64"
+	cp "brmk_plugin/BrickRust.uplugin" "$(PLUGIN_DIR)"
+	cp "$(TARGET)/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64/brickworks.dll" 
 	cp "$(MINGW)/libgcc_s_seh-1.dll" "$(DIR)/BrickRigs/Binaries/Win64"
 	cp "$(MINGW)/libwinpthread-1.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	mkdir -p "$(DIR)/BrickRigs/Binaries/Win64/brickworks"

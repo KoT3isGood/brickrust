@@ -62,13 +62,28 @@ dependencies = [
 
 [[package]]
 name = "brickworks"
-version = "0.0.5"
+version = "0.1.0"
 dependencies = [
  "brickrust_macros",
  "inventory",
  "libloading",
  "min_hook_rs",
 ]
+
+[[package]]
+name = "brickworks_impl"
+version = "0.1.0"
+dependencies = [
+ "brickrust_macros",
+ "brickworks",
+ "inventory",
+ "libloading",
+ "min_hook_rs",
+]
+
+[[package]]
+name = "brmk_plugin"
+version = "0.1.0"
 
 [[package]]
 name = "cfg-if"
