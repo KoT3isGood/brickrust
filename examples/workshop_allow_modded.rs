@@ -5,7 +5,7 @@
 
 #![allow(static_mut_refs)]
 use brickrust::ue::coreuobject::UObject;
-use brickworks::hookmgr::hook;
+use brickworks::iface::brickworks_create_hook;
 use brickworks::modinfo::ModInfo;
 use brickrust::br;
 use brickrust;
@@ -37,7 +37,7 @@ pub unsafe extern "C" fn mod_init()
 
     brickrust::init();
 
-    hook(
+    brickworks_create_hook(
         br::statics::IsModdedAsset_ptr.unwrap() as *mut (), 
         my_is_asset_modded as *const ()
     );

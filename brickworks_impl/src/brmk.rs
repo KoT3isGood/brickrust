@@ -67,13 +67,14 @@ pub (crate) struct BRMKLookupInfo<const N: usize> {
     pub dll_sizes: [usize; N],
 }
 
-pub (crate) static mut BRMK_DLLS: BRMKLookupInfo<4> = BRMKLookupInfo
+pub (crate) static mut BRMK_DLLS: BRMKLookupInfo<5> = BRMKLookupInfo
 {
     dll_names: [
         b"BrickRigsModKitSteam-BrickRigs.dll\0".as_ptr(),
         b"BrickRigsModKitSteam-Core.dll\0".as_ptr(),
         b"BrickRigsModKitSteam-CoreUObject.dll\0".as_ptr(),
         b"BrickRigsModKitSteam-Engine.dll\0".as_ptr(),
+        b"BrickRigsModKitSteam-UnrealEd.dll\0".as_ptr(),
     ],
     dlls: unsafe { zeroed() },
     dll_addresses: unsafe { zeroed() },

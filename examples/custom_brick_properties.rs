@@ -31,7 +31,7 @@ use brickrust::ue::fproperty::FProperty;
 use brickrust::ue::fproperty::FPropertyVTable;
 use brickrust_macros::sig;
 use brickworks::br_print;
-use brickworks::hookmgr;
+//use brickworks::hookmgr;
 use brickworks::modinfo::ModInfo;
 
 use brickrust::br::properties::interface::*;
@@ -77,9 +77,16 @@ extern "C" fn mod_info() -> ModInfo
     }
 }
 
+#[cfg(feature="brmk")]
+lookup!
+{
+    //pub const IS_IN_OBJECT: Option<unsafe extern "C" fn(a: *mut (), b: *mut ()) -> bool> = 
+    //    LookupInfo::Binary(0, LookupMode::SignatureStart, sig!());
+    pub const FLOAT_PROPERTY_SERIALIZE_ITEM: *const u8 = 
+        LookupInfo::ProcMangled("?SerializeItem@?$TProperty_WithEqualityAndSerializer@MVFNumericProperty@@@@UEBAXVFStructuredArchiveSlot@@PEAXPEBX@Z");
+}
 
-static mut IS_IN_OBJECT: Option<unsafe extern "C" fn(a: *mut (), b: *mut ()) -> bool> = None;
-unsafe extern "C" fn IsInObject(a: *mut (), b: *mut ()) -> bool
+unsafe extern "C" fn IsInObject(_a: *mut (), _b: *mut ()) -> bool
 {
     true
 }
@@ -88,18 +95,13 @@ unsafe extern "C" fn IsInObject(a: *mut (), b: *mut ()) -> bool
 #[no_mangle]
 pub unsafe extern "C" fn mod_init()
 {
-    static mut INITED: bool = false;
-    if INITED { return; }
-    INITED = true;
+    CUSTOMDATA_OFFSETS = Some(HashMap::new());
     brickrust::init();
     brickrust::hook_construct_uobject(ue_object_init);
-    brickrust::hook_post_engine_init(ue_engine_init);
+    //brickrust::hook_post_engine_init(ue_engine_init);
     
-    let sig = lookup("IsInObject",sig!("48 89 5c 24 10 56 48 83 ec 20 83 79 28 00"));
-    br_print!("{:p}", sig);
-    IS_IN_OBJECT = Some(transmute(sig));
-    hookmgr::hook(IS_IN_OBJECT.unwrap() as _, IsInObject as _);
-    FLOAT_PROPERTY_SERIALIZE_ITEM = lookup("FFloatProperty::SerializeItem", sig!("48 8B 02 4D 8B D0 4C 8B 48 08 49 8b 49 08 48 8b 11 48 8d 42 04"));
+    //IS_IN_OBJECT = Some(transmute(sig));
+    //hookmgr::hook(IS_IN_OBJECT.unwrap() as _, IsInObject as _);
 }
 
 pub unsafe extern "C" fn custom_reflect_properties( iface: *const IBrickPropertyInterface, reflection: *mut FBrickPropertyReflection )
@@ -165,39 +167,25 @@ struct CustomData
     edit_info: FBrickPropertyEditInfo,
 }
 static mut CUSTOMDATA_OFFSETS: Option<HashMap<*const UClass, usize>> = None;
-static mut FLOAT_PROPERTY_SERIALIZE_ITEM: *const u8 = core::ptr::null();
 unsafe fn ue_engine_init()
 {
-    CUSTOMDATA_OFFSETS = Some(HashMap::new());
-    for o in GObjects().iter()
-    {
-        br_print!("_ {}", (*o).name_private);
-        if (*o).IsA_str("Class")
-        {
-            let s = o as *mut UStruct;
-            if (*s).InheritsFrom_str("Brick")
-            {
-                let cls = o as *mut UClass;
-                CUSTOMDATA_OFFSETS.as_mut().unwrap().insert(cls, uclass_reserve_memory2::<CustomData>(cls));
-            }
-        }
-    }
 }
 unsafe extern "C" fn SameType( prop: *mut FProperty, other: *mut FProperty) -> bool
 {
     (*prop).field.class_private == (*other).field.class_private
 }
 
-unsafe fn ue_object_init( _params: FStaticConstructObjectParameters, obj: *mut UObjectBase )
+unsafe fn ue_object_init( _params: *mut FStaticConstructObjectParameters, obj: *mut UObjectBase )
 {
     //br_print!("{}", (*obj).name_private);
 
     if (*obj).IsA_str("Brick")
     {
         let brick = obj as *mut UBrick;
-        let cls = (*brick).uobject.class_private;
+        let cls = (*brick).uobject.class_private as *mut UClass;
         br_print!("{}",(*cls).ustruct.ufield.uobject.name_private);
-        let offset = *CUSTOMDATA_OFFSETS.as_mut().unwrap().get(&cls).unwrap();
+        let offsets = CUSTOMDATA_OFFSETS.as_mut().unwrap();
+        let offset = *offsets.entry(cls).or_insert(uclass_reserve_memory2::<CustomData>(cls));
         let data = (brick as *mut u8).add(offset) as *mut CustomData;
         (*data).val = 10.0;
 
@@ -208,7 +196,7 @@ unsafe fn ue_object_init( _params: FStaticConstructObjectParameters, obj: *mut U
 
         br_print!("Brick: {:p}, Data {:p}, Offset: {}", brick, data, data as i64 - brick as i64);
         (*data).property.vtbl = fmalloc::calloc2::<FPropertyVTable>(1);
-        (*(*data).property.vtbl).SerializeItem = transmute(FLOAT_PROPERTY_SERIALIZE_ITEM);
+        (*(*data).property.vtbl).SerializeItem = transmute(FLOAT_PROPERTY_SERIALIZE_ITEM.unwrap());
         (*(*data).property.vtbl).SameType = SameType;
         (*data).property.element_size = 4;
         (*data).property.array_dim = 1;

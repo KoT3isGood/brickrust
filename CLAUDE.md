@@ -4,24 +4,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BrickRust is an SDK and mod loader for the game **Brick Rigs** (Steam ID: 552100), written in unsafe Rust. It provides tooling to create mods that hook into the Unreal Engine 4 runtime used by the game, intercept function calls, and extend game functionality via brick property customization.
+BrickRust is an SDK and mod loader for **Brick Rigs** (Steam ID: 552100), written in unsafe Rust. It maps Unreal Engine 4 structures, hooks engine functions, and extends game functionality via brick property customization and blueprint interception.
 
-The project is a cargo workspace with four crates:
-- **brickrust** — the main SDK crate (target: `x86_64-pc-windows-gnu`, dylib). Maps UE4 structures, hooks functions, provides mod APIs.
-- **brickworks** — the mod loader DLL. Scans a `brickworks/` folder for `.dll` mod files, initializes them via `mod_info`/`mod_init`, provides signature lookup and hooking infrastructure.
-- **brickrust_macros** — proc-macro crate providing the `sig!` macro for compile-time byte-pattern signatures.
-- **xinput_proxy** — a shim DLL that forwards xinput1_3.dll calls and loads brickworks.dll at startup.
+The project is a cargo workspace with five crates plus one proxy crate:
+
+| Crate | Type | Purpose |
+|-------|------|---------|
+| **brickrust** | dylib | Main SDK — UE4 structure mapping, function hooks, mod APIs |
+| **brickworks** | rlib | Shared interface definitions, signature lookup macros, mod loading logic |
+| **brickworks_impl** | cdylib | The actual `brickworks.dll` — implements brickworks interface via platform-specific backends |
+| **brickrust_macros** | proc-macro | The `sig!()` macro for compile-time byte-pattern signatures |
+| **brmk_plugin** | cdylib | BrickRigs Mod Kit Steam plugin variant of brickworks |
+| **xinput_proxy** | cdylib | Shims `xinput1_3.dll` and loads `brickworks.dll` at startup |
 
 ## Building and Installing
 
 ```sh
-# Default target is x86_64-pc-windows-gnu (set in .cargo/config.toml)
-
-# Release build + install to Brick Rigs folder
+# Release build (install to Brick Rigs folder)
 make install DIR="/path/to/common/Brick Rigs"
 
 # Development build
 make install DIR="/path/to/common/Brick Rigs" dev=true
+
+# BRMK variant build
+make install_brmk DIR="/path/to/common/Brick Rigs"
 
 # Generate docs (targets windows)
 make doc
@@ -39,7 +45,34 @@ cargo test --target x86_64-unknown-linux-gnu --workspace --exclude brickrust
 
 Tests exist in the `brickworks::patterns` module (signature lookup tests). The main brickrust crate does not have unit tests — it is runtime hooking code for Windows.
 
+## Workspace Features
+
+| Feature | Effect |
+|---------|--------|
+| `brmk` | Enables BRMK (BrickRigs Mod Kit Steam) plugin support; enables `brickworks/brmk` |
+| `brmk_1_10_7` | Maps BRMK symbols for version 1.10.7 |
+| `br_1_11` | Maps Brick Rigs version 1.11 symbols |
+| `br_1_10_7` | Maps Brick Rigs version 1.10.7 symbols |
+| `brickworks_impl/impl` | Enables the actual implementation (win32/win_universal) in brickworks_impl; without this, brickworks_impl is the stub |
+
 ## Architecture
+
+### Crate relationship
+
+```
+brickworks_impl (cdylib, builds as brickworks.dll)
+  └── uses: brickworks (rlib) for interface definitions
+  └── uses: brickrust_macros for sig! macro
+  └── backends: win32.rs (Windows DLL) | brmk.rs (BRMK plugin) | stub.rs (fallback)
+
+brickrust (dylib, the SDK for mod authors)
+  └── depends on: brickworks (rlib) for lookup!, sig!, br_print!
+  └── depends on: brickrust_macros (proc-macro) for sig!
+  └── depends on: min_hook_rs, inventory, backtrace
+
+xinput_proxy (cdylib, builds as xinput1_3.dll)
+  └── loads brickworks.dll at DLL_PROCESS_ATTACH
+```
 
 ### Entry points
 
@@ -47,106 +80,125 @@ Mods must export two symbols (no mangling):
 - `mod_info()` → returns a `ModInfo` struct with name, description, version, game_version, authors
 - `mod_init()` → called before engine init; must call `brickrust::init()` and set up hooks
 
-The mod loader (brickworks) scans `brickworks/*.dll`, loads each, resolves `mod_info` and `mod_init`, and runs them.
+The mod loader (`brickworks.dll`) scans `brickworks/` and `BrickRigs/Mods/*/` for `.dll` files, loads each via `libloading`, resolves `mod_info` and `mod_init`, and calls each mod's `mod_init()`.
+
+Mod filenames prefixed with `_` are marked as disabled (e.g., `_disabled.dll` → skipped).
 
 ### Hooking system
 
-The hooking pipeline uses **min_hook_rs** (EtwHook) for inline function hooking. Key hooks:
+The hooking pipeline uses **min_hook_rs** (ETW hooks) for inline function hooking. `brickworks_impl` provides the `brickworks_hook_internal()` binding that actually installs hooks. The `hookmgr.rs` module maintains a HashMap of hooked functions and their pre/post hook callbacks.
 
-1. **UEngine::Init** — `hook_post_engine_init()` registers callbacks fired after engine init
+Key hooks (non-BRMK):
+
+1. **UEngine::Init** — `hook_post_engine_init()` fires after engine init
 2. **UEngine::LoadMap** — `hook_post_load_map()` fires when a map loads
-3. **StaticConstructObject_Internal** — `hook_construct_uobject()` intercepts every UE4 object construction, dispatching to subhooks
+3. **StaticConstructObject_Internal** — `hook_construct_uobject()` intercepts every UE4 object construction
 
 Subhook callbacks receive either `*mut UObjectBase` (object init) or raw function pointers (post-init/map callbacks).
 
+#### Pre/post hook model
+
+Each hooked function can have:
+- **prehooks** — called before the original function
+- **posthooks** — called after the original function
+
+Access via `brickworks_add_prehook()`/`brickworks_get_prehooks()` and `brickworks_add_posthook()`/`brickworks_get_posthooks()`.
+
 ### Signature scanning
 
-Functions are located by byte-pattern signatures at runtime via `brickworks::patterns::lookup()`. The `sig!()` macro (from brickrust_macros) compiles byte patterns with `?`/`??` wildcards into `Signature` structs.
+Functions are located by byte-pattern signatures at runtime via the `lookup!` macro, which registers `InventoryLookupInfo` entries. During `do_lookup()` (called in `init_signatures()`), each entry is resolved through the backend's `brickworks_binary_lookup()`, `brickworks_binary_dll_lookup()`, or `brickworks_cpp_lookup()` function.
+
+The `sig!()` macro (from brickrust_macros) compiles byte patterns with `?`/`??` wildcards into `Signature` structs containing byte arrays and boolean masks.
+
+Lookup modes:
+- `SignatureStart` — use offset directly
+- `Offset32` — read a 32-bit relative offset from the matched address
+- `Direct64` — read a 64-bit absolute address
+
+Lookup info types:
+- `Binary` — scan the game binary directly
+- `BinaryDll` — scan a specific DLL (used in BRMK)
+- `Proc` — resolve via `GetProcAddress` by decorated name
+- `ProcMangled` — resolve via `GetProcAddress` by C++ mangled name
 
 ### UE4 structure mapping (`src/ue/`)
 
 Maps core Unreal Engine 4 types:
 - `coreuobject.rs` — `UObject`, `UObjectBase`, `FUObjectArray`, vtables, object iteration
-- `uclass.rs` — `UClass`, `UStruct`
+- `uclass.rs` — `UClass`, `UStruct`, `UField`, `FField`
 - `fname.rs` — `FName` (UE4 name system)
 - `fproperty.rs` — `FProperty` and vtables
 - `fstring.rs` / `ftext.rs` — string/UScriptName types
 - `fframe.rs` — `FFrame` (UE4 execution stack frames)
 - `tarray.rs` / `tmap.rs` / `tpair.rs` / `tshared.rs` / `toptional.rs` — UE4 containers
+- `fmalloc.rs` / `fassetregistry.rs` / `farchive.rs` — memory and serialization
 - `blueprint.rs` — Blueprint function interception via `inventory`-driven dispatch
 - `gameplay/` — `AActor`, `UWorld`, `FActorSpawnParameters`, `GWorld`, `SpawnActor`
 
-### External header reference
+### Game-specific structures (`src/br/`)
 
-BrickRigs uses a fork of Unreal Engine 4. For UE4 types and signatures that don't map directly to this project's headers, use:
+All types follow [Redacted00/BrickRigs-Headers]. Leaf modules:
+- `assetmgr.rs` — `ELoadAssetLibrariesMode`, `UBrickAssetManager`
+- `statics.rs` — `GetProjectVersion()`, `IsModdedAsset()`
+- `utils.rs` — utility functions
+- `modhook.rs` — mod hook infrastructure
 
-- **[Redacted00/BrickRigs-Headers](https://github.com/Redacted00/BrickRigs-Headers)** — community-maintained Brick Rigs header definitions
+Subdirectory modules:
+- `brickeditor/` — `UBrickEditorObjectStaticInfo`, `UBrickEditorObjectStaticInfoVTable`, `FBrickRigsSaveVersion`
+- `bricks/` — `UBrick` (+ `UBrickFlags1/2/3`), `UScalableBrick`, `UMotorBrick` (`UMotorBrickFlags`), `UActuatorBrick` (`FActuatorState`, `EActuatorMode`, `UActuatorBrickFlags`), `UThursterBrick`, `FFuelTankParams`, `FBrickTickFunction`, `FBrickDamage`
+- `vehicle/` — `ABrickVehicle` (`ABrickVehicleFlags1/2`, `FViewTargetZoomCache`), `UBrickConnection` (`FBrickConnectionParams`, `UBrickConnectionFlags`, `EConnectorType`), `UPhysicsConstraintConnection`, `FRepVehicleMovement`, `FVehicleInputChannel`, `EVehicleInputAxis`
+- `game/` — `UBrickGameInstance`, `ISpawnPointInterface`
+- `properties/` — `IBrickPropertyInterface` (+ vtable), `FBrickProperty` (+ vtable, instance), `FNumericBrickPropertyBase` (+ vtable, value, range), `FBrickPropertyEditInfo`, `FBrickPropertyReflection` (+ filter), `FTextBrickProperty`, `TBrickPropAttribute<T>`, `FBrickPropertyContainer`, `ENumericValueType`, `EFluAxisLock`
+- `items/` — `AInventoryItem`
+- `projectiles/` — `EAmmoType`
 
-Note: these headers are outdated and may not match the exact game version (1.11.x), but they provide useful reference for UE4 struct layouts and function signatures used throughout the codebase.
-
-### Brick Rigs game structures (`src/br/`)
-
-Game-specific types:
-- `bricks/` — `UBrick`, `UScalableBrick`, `UMotor`, `UActuator`
-- `vehicle/` — `UBrickVehicle`, `UBrickConnection`, `InputChannel`, `InputAxis`, `Repmovement`
-- `game/` — `GameInstance`, `SpawnPoint`, game lifecycle
-- `properties/` — `IBrickPropertyInterface`, `FProperty`, `FNumericBrickPropertyBase`, `FBrickPropertyEditInfo`, property reflection system
-- `items/` — inventory system
-- `projectiles/` — ammo types
-- `brickeditor/` — save/load for brick layouts
-- `statics.rs` — static game function signatures
 
 ### VTable and memory manipulation (`src/utils/`, `src/really_scary.rs`)
 
 - `utils/vtable.rs` — copies vtables to writable memory so mods can override methods
-- `really_scary.rs` — dangerously expands `UClass` allocation size to embed custom struct fields inline
+- `really_scary.rs` — `uclass_reserve_memory()` / `uclass_reserve_memory2::<T>()` expand `UClass` allocation size to embed custom struct fields inline
 
 ### Mod dispatch
 
 The `inventory` crate stores `BlueprintFunction` structs; during `ProcessEvent` interception, the engine dispatches to registered blueprint functions by matching function name and class.
 
-### Field naming convention (`src/ue/` only)
+Use the `bp_function!()` macro to register:
+```rust
+bp_function(my_function_name | obj, stack, result | { /* body */ });
+bp_function(Some("MyClass"), "MyFunction", |obj, stack, result| { /* body */ });
+```
 
-Two distinct naming styles are used depending on the struct kind:
+### Field naming conventions (`src/ue/`)
 
-- **VTable structs** (e.g., `UObjectVTable`, `AActorVTable`) — field names use **PascalCase**, matching UE4's C++ vtable method names (e.g., `Destructor`, `PostLoad`, `ProcessEvent`)
-- **Data structs** (e.g., `UObjectBase`, `AActor`, `FActorSpawnParameters`) — field names use **snake_case** (e.g., `vtable`, `object_flags`, `internal_index`)
+- **VTable structs** (e.g., `UObjectVTable`, `AActorVTable`) — field names use **PascalCase**, matching UE4's C++ vtable method names
+- **Data structs** (e.g., `UObjectBase`, `AActor`) — field names use **snake_case**
 
-### Field naming convention (`src/br/` only)
+### Field naming conventions (`src/br/`)
 
-All variable names are taken directly from the [Redacted00/BrickRigs-Headers](https://github.com/Redacted00/BrickRigs-Headers) repository. Data struct field names match the header definitions exactly.
+All variable names follow [Redacted00/BrickRigs-Headers]. For fields with unknown purposes: `_aX` where `X` is an incrementing index (`_a1`, `_a2`, ...).
 
-For fields with unknown purposes (due to incomplete header definitions, reverse engineering gaps, or game version mismatches), the convention `_aX` is used where `X` is an incrementing index starting from 1 (e.g., `_a1`, `_a2`, `_a3`). This placeholder naming matches the pattern used when the exact purpose or type of a field cannot be determined.
-
-Bitflag variants use **SCREAMING_SNAKE_CASE** without the `b` prefix (e.g., `IS_RUNNING`, `WAS_ON_THROTTLE`, `MANUALLY_SHIFTED`), omitting the `b` prefix that appears on the C++ header boolean fields (e.g., `bIsRunning`, `bWasOnThrottle`).
-
-To create new bitflags: the struct type uses the `{TypeName}Flags` naming (e.g., `UMotorBrickFlags`), with the data struct field named `flags`. When a struct has multiple bitflag fields, each gets a numeric suffix — struct `UMotorBrickFlagsX`, variable `flagsX`.
-
-Bitflag struct sizes must match the C++ layout: use `u8` for packed `uint8` fields, `u16` for `uint16`, `u32` for `uint32`, `u64` for `uint64`.
+Bitflag variants use **SCREAMING_SNAKE_CASE** without the `b` prefix. Bitflag struct sizes must match the C++ layout: `u8` for `uint8`, `u16` for `uint16`, etc.
 
 ## DLL / Engine / Map lifecycle
 
-The mod loader and SDK follow a strict initialization pipeline. Understanding when each stage fires is critical for correct API usage.
+The mod loader and SDK follow a strict initialization pipeline.
 
-### Stage 1: DLL load (brickworks.dll)
+### Stage 1: DLL load (`brickworks.dll`)
 
-When the game loads `brickworks.dll`, `brickworks_init()` runs. This function:
+`brickworks_init()` runs. This:
 1. Initializes the hook manager (`min_hook_rs`)
-2. Scans the `brickworks/` directory for `.dll` files (prefixed `_` = disabled)
+2. Scans `brickworks/` and `BrickRigs/Mods/*/` for `.dll` files
 3. Loads each mod DLL via `libloading`
 4. Resolves `mod_info` from each mod and prints metadata
 5. Calls each mod's `mod_init()`
 
-At this point **no engine functions are available**. This stage is for setting up vtable hooks and early signatures.
+**No engine functions are available.** This stage is for setting up vtable hooks and early signatures.
 
 ### Stage 2: Engine init (`UEngine::Init`)
 
-After the game's own `UEngine::Init` completes, the SDK fires all callbacks registered via `hook_post_engine_init()`. This is when:
-- `init_signatures()` has resolved all UE4 and game function pointers
-- Blueprint functions are ready for dispatch
-- You can call engine functions like `warn_version_mismatch!()` and `check_blueprint_mod()`
+After the game's own `UEngine::Init` completes, the SDK fires all callbacks registered via `hook_post_engine_init()`. `init_signatures()` resolves all UE4 and game function pointers. Blueprint functions are ready.
 
-In a mod's `mod_init()`, register callbacks with:
+Register with:
 ```rust
 brickrust::hook_post_engine_init(my_engine_init);
 ```
@@ -155,10 +207,7 @@ The SDK's own `engine_load()` callback (registered internally) scans `GObjects()
 
 ### Stage 3: Map load (`UEngine::LoadMap`)
 
-When a level/map loads, `UEngine::LoadMap` is hooked. After the game's map load completes, all callbacks registered via `hook_post_load_map()` fire. At this point:
-- `GObjects()` contains the full object graph for the current level
-- `GNames()` has the full name table
-- Actor components are constructible and traversable
+After the game's map load completes, all callbacks registered via `hook_post_load_map()` fire. `GObjects()` contains the full object graph for the current level; `GNames()` has the full name table.
 
 Register with:
 ```rust
@@ -167,12 +216,12 @@ brickrust::hook_post_load_map(my_map_init);
 
 ### Stage 4: Object construction (ongoing)
 
-`StaticConstructObject_Internal` is hooked for the lifetime of the process. Every time UE4 creates an object (via `StaticConstructObject_Internal`), all subhooks registered via `hook_construct_uobject()` receive the new `*mut UObjectBase`. This is the primary mechanism for:
-- Replacing vtables on specific class types
-- Injecting custom data into new instances
-- Intercepting CDO (Class Default Object) creation
+`StaticConstructObject_Internal` is hooked for the process lifetime. Every UE4 object creation dispatches to all subhooks registered via `hook_construct_uobject()`. Use this to:
+- Replace vtables on specific class types
+- Inject custom data into new instances
+- Intercept CDO (Class Default Object) creation
 
-In a mod:
+Register with:
 ```rust
 brickrust::hook_construct_uobject(my_object_init);
 ```
@@ -184,7 +233,7 @@ brickrust::hook_construct_uobject(my_object_init);
 | DLL load | Game loads brickworks.dll | None (pre-engine) | — |
 | Engine init | After `UEngine::Init` | Version checks, blueprint checks | `hook_post_engine_init()` |
 | Map load | After `UEngine::LoadMap` | Full object traversal, GObjects, GNames | `hook_post_load_map()` |
-| Object construction | Every `StaticConstructObject_Internal` call | Vtable manipulation, instance data | `hook_construct_uobject()` |
+| Object construction | Every `StaticConstructObject_Internal` | Vtable manipulation, instance data | `hook_construct_uobject()` |
 
 ## Key development patterns
 
@@ -196,16 +245,47 @@ brickrust::hook_construct_uobject(my_object_init);
 
 ## Important constraints
 
-- **Target only**: `x86_64-pc-windows-gnu`. The Cargo.toml and .cargo/config.toml both pin this.
-- **Panics on abort**: Both dev and release profiles use `panic = "abort"` — no unwinding.
-- **No native Linux support**: The game's Linux modding is incomplete; focus on Windows target.
-- **Runtime dependencies**: The game binary needs `xinput1_3.dll`, `brickworks.dll`, and mingw runtime DLLs in the right paths.
-- **Version checks**: Mods should run `warn_version_mismatch!()` or `panic_version_mismatch!()` after engine init (not in `mod_init`).
-- **Blueprint mod checks**: Use `check_blueprint_mod()` / `ensure_blueprint_mod()` to validate required mods.
+- **Target only**: `x86_64-pc-windows-gnu`
+- **Panics on abort**: Both dev and release profiles use `panic = "abort"` — no unwinding
+- **Runtime dependencies**: The game binary needs `xinput1_3.dll`, `brickworks.dll`, and mingw runtime DLLs in the right paths
+- **Version checks**: Mods should run `warn_version_mismatch!()` or `panic_version_mismatch!()` after engine init (not in `mod_init`)
+- **Blueprint mod checks**: Use `check_blueprint_mod()` / `ensure_blueprint_mod()` to validate required mods
 
-## File conventions
+## Examples
 
-- Module files in `src/` use lowercase with `mod.rs` for module roots
-- `pub(crate)` for internal-only APIs, `pub` for mod-facing APIs
-- Engine/game function pointers stored as `Option<unsafe extern "C" fn(...)>`
-- Vtable pointers cast via `transmute` to typed function pointers
+Five example mods are included in the `examples/` directory:
+
+| Example | Description |
+|---------|-------------|
+| `basic_init.rs` | Basic mod setup with vtable replacement on UBrick |
+| `custom_brick_properties.rs` | Custom brick properties via `uclass_reserve_memory` + property reflection |
+| `function_tests.rs` | Static game function usage (`GetProjectVersion`, `GetEnabledModNames`) |
+| `better_crashes.rs` | Simpler engine init hook |
+| `workshop_allow_modded.rs` | Workshop modded asset handling |
+
+All examples follow the same pattern: `mod_info()` + `mod_init()` that calls `brickrust::init()` and registers hooks.
+
+## Key macros
+
+| Macro | Crate | Purpose |
+|-------|-------|---------|
+| `sig!("..." )` | brickrust_macros | Compile-time byte-pattern signature with `?`/`??` wildcards |
+| `lookup! { ... }` | brickworks | Register function pointer lookups (binary, dll, proc, proc_mangled) |
+| `bp_function!(...)` | brickrust | Register blueprint function overrides via inventory |
+| `container_of!(ptr, Type, field)` | brickrust_macros | Calculate struct base pointer from field pointer |
+| `set_module_name!(b"...")` | brickworks | Set module prefix for `br_print!()` output |
+| `br_print!(...)` | brickworks | Debug logging (calls `OutputDebugStringA` + `brickworks_puts`) |
+| `warn_version_mismatch!()` | brickrust | Warn if game version doesn't match mod's `game_version` |
+| `panic_version_mismatch!()` | brickrust | Panic if game version doesn't match mod's `game_version` |
+
+## BRMK (BrickRigs Mod Kit Steam)
+
+When the `brmk` feature is enabled, brickworks builds as a plugin DLL (`BrickRigsModKitSteam-BrickRust.dll`) instead of a standalone DLL. The `brmk_plugin/` crate exports `InitializeModule()` which is called by the game's plugin system. BRMK uses a different lookup model: signatures scan plugin DLLs (`BrickRigsModKitSteam-*.dll`) instead of the main binary, and function pointers resolve via C++ decorated names.
+
+## Utility functions
+
+- `copy_vtable_estimate_size()` / `copy_vtable()` — copy and size a vtable to writable memory
+- `uclass_reserve_memory2::<T>()` — expand `UClass` size to embed `T` inline
+- `GObjects()` — iterate `FUObjectArray` via `FUObjectArrayIter`
+- `GNames()` — access `FNamePool` for name table lookup
+- `FName::search_str()` — find or allocate a `FName` from a string (with hashmap caching)

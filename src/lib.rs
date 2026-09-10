@@ -131,7 +131,6 @@ pub unsafe fn init()
     static mut INITED: bool = false;
     if INITED { return; }
     INITED = true;
-    br_print!("brickrust");
     init_signatures();
     blueprint::init();
 }

@@ -75,9 +75,9 @@ unsafe extern "C" fn static_construct( params: *mut FStaticConstructObjectParame
     }
     return uobject;
 }
-#[cfg(not(feature = "brmk"))]
 unsafe extern "C" fn engine_init(a: *mut (), b: *mut ())
 {
+    br_print!("hello\n");
     (UEngine_Init_hook.unwrap())(a, b);
 
     let subhooks = brickworks_get_posthooks(
@@ -175,6 +175,13 @@ lookup! {
     pub const UEngine_LoadMap_ptr: unsafe extern "C" fn (a: *mut (), b: *mut (), c: *mut (), d: *mut (), e: *mut ()) -> bool =
         LookupInfo::Binary(-0x3C, LookupMode::SignatureStart, sig!("4c 89 74 24 60 4c 8b ea 4c 89 4c 24 30 4c 89 44 24 70 48 89 4c 24 50"));
 }
+#[cfg(feature = "brmk")]
+lookup! {
+    pub const UEngine_Init_ptr: unsafe extern "C" fn (a: *mut (), b: *mut ()) = 
+        LookupInfo::ProcMangled("?StartPlayInEditorSession@UEditorEngine@@MEAAXAEAUFRequestPlaySessionParams@@@Z");
+    //pub const UEngine_LoadMap_ptr: unsafe extern "C" fn (a: *mut (), b: *mut (), c: *mut (), d: *mut (), e: *mut ()) -> bool =
+    //    LookupInfo::Binary(-0x3C, LookupMode::SignatureStart, sig!("4c 89 74 24 60 4c 8b ea 4c 89 4c 24 30 4c 89 44 24 70 48 89 4c 24 50"));
+}
 
 pub(crate) unsafe fn init_signatures()
 {
@@ -196,17 +203,18 @@ pub(crate) unsafe fn init_signatures()
         )
     );
     */
+    /*UEngine_Init_hook = Some(
+        transmute(
+            brickworks_create_hook(
+                UEngine_Init_ptr.unwrap() as *const _, 
+                engine_init as *const _
+            )
+        )
+    );*/
 
     #[cfg(not(feature = "brmk"))]
     {
-        UEngine_Init_hook = Some(
-            transmute(
-                brickworks_create_hook(
-                    UEngine_Init_ptr.unwrap() as *const _, 
-                    engine_init as *const _
-                )
-            )
-        );
+
         UEngine_LoadMap_hook = Some(
             transmute(
                 brickworks_create_hook(
