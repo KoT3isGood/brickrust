@@ -66,8 +66,8 @@ pub unsafe fn lookup_offset( addr: *const u8, offset: isize, mode: LookupMode) -
             return addr;
         }
         LookupMode::Offset32 => {
-            let reladdr = (addr as *mut u32).read_unaligned();
-            return addr.add(4).add(reladdr as usize);
+            let reladdr = (addr as *mut i32).read_unaligned();
+            return addr.add(4).offset(reladdr as isize);
         }
         LookupMode::Direct64 => {
             let reladdr = (addr as *mut u64).read_unaligned();
@@ -129,6 +129,7 @@ macro_rules! lookup {
         )*
     ) => {
         $(
+            #[allow(static_mut_refs)]
             pub static mut $name: LookupValue<$ty> = LookupValue::<$ty>::null();
             $crate::patterns::inventory::submit! {
                 use $crate::patterns::InventoryLookupInfo;
@@ -142,6 +143,7 @@ macro_rules! lookup {
         )*
     };
 }
+set_module_name!(b"lookup\0");
 
 pub unsafe fn do_lookup()
 {

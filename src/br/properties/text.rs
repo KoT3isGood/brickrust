@@ -6,15 +6,6 @@ pub struct FTextBrickPropertyVTable(pub FBrickPropertyVTable);
 
 impl FTextBrickPropertyVTable
 {
-    pub const fn new() -> FTextBrickPropertyVTable
-    {
-        FTextBrickPropertyVTable(FBrickPropertyVTable::new())
-    }
-    pub unsafe fn ptr() -> *const FTextBrickPropertyVTable
-    {
-        static PTR: FTextBrickPropertyVTable = FTextBrickPropertyVTable::new();
-        &PTR
-    }
 }
 
 #[repr(C)]

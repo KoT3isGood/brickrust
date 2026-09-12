@@ -3,7 +3,7 @@ use crate::ue::fmath::FVector;
 use crate::ue::fname::FName;
 use crate::ue::fstring::FString;
 use crate::ue::ftext::FText;
-use brickworks::br_print;
+use brickworks::{br_print, lookup, patterns::*};
 use crate::BrickRust_print;
 
 #[repr(u8)]
@@ -61,10 +61,6 @@ pub struct FNumericBrickPropertyValue
     pub data: FVector,
     pub num_used: u8,
 }
-impl FNumericBrickPropertyBase
-{
-
-}
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct FNumericBrickPropertyRange
@@ -73,6 +69,25 @@ pub struct FNumericBrickPropertyRange
     pub max: FNumericBrickPropertyValue,
 }
 
+impl FNumericBrickPropertyRange
+{
+    pub const fn from_f32( min: f32, max: f32 ) -> FNumericBrickPropertyRange
+    {
+        FNumericBrickPropertyRange
+        {
+            min: FNumericBrickPropertyValue
+            {
+                data: FVector { x: min, y: 0.0, z: 0.0 },
+                num_used: 1,
+            },
+            max: FNumericBrickPropertyValue
+            {
+                data: FVector { x: max, y: 0.0, z: 0.0 },
+                num_used: 1,
+            }
+        }
+    }
+}
 
 
 #[repr(C)]
@@ -81,57 +96,28 @@ pub struct FNumericBrickPropertyBase
 {
     pub property: FBrickProperty,
     pub value_type: TBrickPropAttribute<ENumericValueType>,
+    pub _a0: usize,
+    pub _a1: usize,
+    pub _a2: usize,
+    pub _a3: usize,
+    pub _a4: usize,
+    pub _a5: usize,
+    pub _a6: usize,
+    pub _a7: usize,
+    pub _a8: usize,
+    pub _a9: usize,
+    pub _a10: usize,
+    pub _a11: usize,
+    //pub value_range: TBrickPropAttribute<FNumericBrickPropertyRange>,
+    pub axis_lock: TBrickPropAttribute<EFluAxisLock>,
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct FNumericBrickPropertyBaseVTable(pub FBrickPropertyVTable);
 
-impl FNumericBrickPropertyBase
+lookup!
 {
-    unsafe extern "C" fn ExportProperty( _prop: *mut FBrickProperty, _container: *const ()) -> FString 
-    {
-        let _value = FNumericBrickPropertyValue::default();
-        todo!()
-    }
-    pub unsafe extern "C" fn GetTypeName( _prop: *mut FBrickProperty ) -> FName
-    {
-        let name = FName::default();
-        //BrickRust_string_to_fname(b"FNumericBrickProperty GetTypeName\0".as_ptr(), &mut name);
-        br_print!("FNumericBrickPropertyBase GetTypeName");
-        return name;
-    }
-    pub unsafe extern "C" fn ComparePropertyValues( _prop: *const FBrickProperty, A: *const (), B: *const () ) -> bool
-    {
-        let _a = A as *mut f32;
-        let _b = B as *mut f32;
-        br_print!("FNumericBrickPropertyBase ComparePropertyValues");
-        false
-    }
-    pub unsafe extern "C" fn GetValueAsText( _prop: *mut FBrickProperty, _container: *const (), _out_value: *mut FText ) -> bool
-    {
-        //BrickRust_string_to_ftext(b"10.000\0".as_ptr(), out_value);
-        br_print!("FNumericBrickPropertyBase GetValueAsText");
-        true
-    }
-}
-
-#[allow(non_upper_case_globals)]
-pub static mut FNumericBrickPropertyBase_ptr: *const FNumericBrickPropertyBaseVTable = core::ptr::null();
-
-impl FNumericBrickPropertyBaseVTable
-{
-    pub const fn new() -> FNumericBrickPropertyBaseVTable
-    {
-        let mut vtbl = FBrickPropertyVTable::new(); 
-        vtbl.ExportProperty = FNumericBrickPropertyBase::ExportProperty;
-        vtbl.GetValueAsText = FNumericBrickPropertyBase::GetValueAsText;
-        //vtbl.ComparePropertyValues = FNumericBrickPropertyBase::ComparePropertyValues;
-        FNumericBrickPropertyBaseVTable(vtbl)
-    }
-    pub unsafe fn ptr() -> *const FBrickPropertyVTable
-    {
-        static TBL: FNumericBrickPropertyBaseVTable = FNumericBrickPropertyBaseVTable::new();
-        &TBL.0
-    }
+    pub const NUMERIC_BRICK_PROPERTY_FLOAT_VTABLE: *const FBrickPropertyVTable = 
+        LookupInfo::Binary(-4, LookupMode::Offset32, sig!("66 c7 43 78 00 01 4c 89 bb 80 00 00 00 44 89 bb 88 00 00 00"));
 }

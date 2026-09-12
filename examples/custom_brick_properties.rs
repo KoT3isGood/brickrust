@@ -25,44 +25,43 @@
 
 
 #![allow(static_mut_refs)]
-use brickrust::really_scary::uclass_reserve_memory;
-use brickrust::really_scary::uclass_reserve_memory2;
+use std::mem::offset_of;
+use std::mem::zeroed;
+
+use brickrust::br::properties::editinfo::FBrickPropertyEditInfo;
+use brickrust::br::properties::numeric::ENumericValueType;
+use brickrust::br::properties::numeric::FNumericBrickPropertyBase;
+use brickrust::br::properties::numeric::FNumericBrickPropertyRange;
+use brickrust::br::properties::numeric::FNumericBrickPropertyValue;
+use brickrust::br::properties::numeric::NUMERIC_BRICK_PROPERTY_FLOAT_VTABLE;
+use brickrust::br::properties::property::FBrickProperty;
+use brickrust::br::properties::property::FBrickPropertyInstance;
+use brickrust::br::properties::property::TBrickPropAttribute;
+use brickrust::ue::fmalloc::calloc_from_object;
+use brickrust::ue::fname::FName;
 use brickrust::ue::fproperty::FProperty;
-use brickrust::ue::fproperty::FPropertyVTable;
-use brickrust_macros::sig;
+use brickrust::ue::fstring::FString;
+use brickrust::ue::ftext::FText;
+use brickrust::ue::tarray::TArray;
+use brickrust::ue::toptional::TOptional;
+use brickrust::ue::tpair::TPair;
+use brickrust::ue::tshared::TSharedRef;
+use brickrust::ue::tshared::TWeakPtr;
 use brickworks::br_print;
-//use brickworks::hookmgr;
 use brickworks::modinfo::ModInfo;
 
 use brickrust::br::properties::interface::*;
 use brickrust::br::properties::reflection::*;
-use brickrust::br::properties::numeric::*;
-use brickrust::br::properties::editinfo::*;
-use brickrust::br::properties::property::*;
 use brickrust::br::bricks::brick::*;
 
-use brickrust::ue::uclass::*;
 use brickrust::ue::coreuobject::*;
-use brickrust::ue::tarray::*;
-use brickrust::ue::fstring::*;
-use brickrust::ue::ftext::*;
-use brickrust::ue::tshared::*;
-use brickrust::ue::fname::*;
-use brickrust::ue::tpair::*;
+
 
 use brickrust::utils::vtable::*;
 use brickrust::container_of;
 
-use brickrust::ue::fmalloc;
-use brickworks::patterns::*;
 use brickworks::set_module_name;
 
-use backtrace;
-use std::collections::HashMap;
-
-use core::mem::zeroed;
-use std::mem::offset_of;
-use std::mem::transmute;
 set_module_name!(b"custom_brick_properties\0");
 
 #[no_mangle]
@@ -77,154 +76,149 @@ extern "C" fn mod_info() -> ModInfo
     }
 }
 
-#[cfg(feature="brmk")]
-lookup!
-{
-    //pub const IS_IN_OBJECT: Option<unsafe extern "C" fn(a: *mut (), b: *mut ()) -> bool> = 
-    //    LookupInfo::Binary(0, LookupMode::SignatureStart, sig!());
-    pub const FLOAT_PROPERTY_SERIALIZE_ITEM: *const u8 = 
-        LookupInfo::ProcMangled("?SerializeItem@?$TProperty_WithEqualityAndSerializer@MVFNumericProperty@@@@UEBAXVFStructuredArchiveSlot@@PEAXPEBX@Z");
-}
-
-unsafe extern "C" fn IsInObject(_a: *mut (), _b: *mut ()) -> bool
-{
-    true
-}
-
-
 #[no_mangle]
 pub unsafe extern "C" fn mod_init()
 {
-    CUSTOMDATA_OFFSETS = Some(HashMap::new());
     brickrust::init();
     brickrust::hook_construct_uobject(ue_object_init);
-    //brickrust::hook_post_engine_init(ue_engine_init);
-    
-    //IS_IN_OBJECT = Some(transmute(sig));
-    //hookmgr::hook(IS_IN_OBJECT.unwrap() as _, IsInObject as _);
 }
 
 pub unsafe extern "C" fn custom_reflect_properties( iface: *const IBrickPropertyInterface, reflection: *mut FBrickPropertyReflection )
 {
     let brick = container_of!(iface, UBrick, property_interface) as *mut UBrick;
-    let pvtbl = class_get_parent_vtable(iface as *mut _) as *mut IBrickPropertyInterfaceVTable;
+    let vtbl = class_get_parent_vtable(iface as *mut _) as *mut IBrickPropertyInterfaceVTable;
 
-    /* 
-     * call the parent so we get color etc 
-     * position and rotation are processed seperately
-     * */
-    ((*pvtbl).ReflectBrickProperties)(iface, reflection); 
+    ((*vtbl).ReflectBrickProperties)(iface, reflection);
 
     let cls = (*brick).uobject.class_private;
-    br_print!("{}",(*cls).ustruct.ufield.uobject.name_private);
-    br_print!("{}",size_of::<FProperty>());
-    let offset = *CUSTOMDATA_OFFSETS.as_mut().unwrap().get(&cls).unwrap();
-    let brickdata = (brick as *mut u8).add(offset) as *mut CustomData;
+    let st = &(*cls).ustruct;
+    let prop = st.GetProperty_str("FloatProperty");
 
-    let mut property = TSharedRef::make_shared_no_alloc();
-    property.object = &mut (*brickdata).brickproperty.property;
+    let numericprop = FNumericBrickPropertyBase
+    {
+        property: FBrickProperty {
+            vtable: NUMERIC_BRICK_PROPERTY_FLOAT_VTABLE.unwrap(),
+            property: prop,
+            name: FName::search_str("FloatProperty\0"),
+        },
+        value_type: TBrickPropAttribute
+        {
+            value: TOptional::some(ENumericValueType::Float),
+            delegate: zeroed(),
+        },
+        _a0: 0,
+        _a1: 0,
+        _a2: 0,
+        _a3: 0,
+        _a4: 0,
+        _a5: 0,
+        _a6: 0,
+        _a7: 0,
+        _a8: 0,
+        _a9: 0,
+        _a10: 0,
+        _a11: 0,
+        axis_lock: TBrickPropAttribute
+        {
+            value: TOptional::some(brickrust::br::properties::numeric::EFluAxisLock::None),
+            delegate: zeroed(),
+        },
+        /*
+        value_range: TBrickPropAttribute
+        {
+            value: TOptional::some(FNumericBrickPropertyRange::from_f32(-100.0, 100.0)),
+            delegate: zeroed(),
+        },
+
+    */
+    };
+    let mut numericprop_ref = TSharedRef::make_shared_no_alloc();
+    numericprop_ref.object = calloc_from_object(&numericprop) as *mut FBrickProperty;
 
     let instance = FBrickPropertyInstance {
-        full_name: FString::from_str("MyParameter\0"),
-        property: property,
-        parent_chain: zeroed(),
+        property: numericprop_ref,
+        full_name: FString::from_str("FloatProperty\0"),
+        parent_chain: TArray::new(),
     };
+    
+
+    
+    //br_print!("{:#?}", *reflection);
+
     if (*reflection).is_serializing
     {
         (*reflection).properties.Add(instance);
+        return;
     }
-    else
+    if !(*reflection).is_serializing
     {
-        (*brickdata).edit_info._a02 = (*(*(*reflection).edit_infos.data).key.object)._a02;
-        let o = (*brickdata).edit_info._a02.unwrap() as *mut UObject;
-        let mut r = TSharedRef::make_shared_no_alloc();
-        r.object = &mut (*brickdata).edit_info;
-        let pair = TPair
-        {
-            key: r,
-            v: 0
+        let edit_info_ref = TSharedRef::<FBrickPropertyEditInfo>::make_shared();
+        let edit_info = edit_info_ref.object;
+        *edit_info = zeroed();
+        (*edit_info).instance = instance;
+        (*edit_info).is_enabled = true;
+        (*edit_info).container_objects = (*reflection).container_objects.clone_arr();
+        (*edit_info).this = TWeakPtr {
+            object: edit_info_ref.object,
+            reference_controller: edit_info_ref.reference_controller,
         };
+        (*edit_info_ref.reference_controller).weak_reference_count += 1;
+        //(*edit_info)._a01 = 0x00000000ffffffff;
+        (*edit_info)._a05 = (*reflection)._a0;
 
-        (*brickdata).edit_info.instance = instance;
-        (*brickdata).edit_info.container_objects = (*reflection).container_objects.clone_arr();
+        let mut name = FString::from_str("FloatProperty\0");
+        (*edit_info).name = FText::from_fstring(&name);
+        name.free();
+        
+        let mut name = FString::from_str("Hello world!\0");
+        (*edit_info).description = FText::from_fstring(&name);
+        name.free();
 
+        let pair = TPair {
+            key: edit_info_ref,
+            v: 0,
+        };
         (*reflection).edit_infos.Add(pair);
-    }
-    for p in (*reflection).edit_infos.iter()
-    {
-        let k = p.key;
-        let o = k.object;
-        br_print!("{:#?}", *o);
-    }
-}
 
-#[repr(C)]
-struct CustomData
-{
-    val: f32,
-    property: FProperty,
-    brickproperty: FNumericBrickPropertyBase,
-    edit_info: FBrickPropertyEditInfo,
+    }
 }
-static mut CUSTOMDATA_OFFSETS: Option<HashMap<*const UClass, usize>> = None;
-unsafe fn ue_engine_init()
+/*
+pub unsafe extern "C" fn custom_reflect_properties2( iface: *const IBrickPropertyInterface, reflection: *mut FBrickPropertyReflection )
 {
+    let vtbl = class_get_parent_vtable(iface as *mut _) as *mut IBrickPropertyInterfaceVTable;
+
+    ((*vtbl).ReflectBrickProperties)(iface, reflection);
+    for key in (*reflection).edit_infos.iter()
+    {
+        let edit = *key.key.object;
+        if edit.instance.full_name.equals_str("BrickSize\0")
+        {
+            br_print!("{:#?}", *(edit.instance.property.object as *mut FNumericBrickPropertyBase));
+            br_print!("{:x}", offset_of!(FNumericBrickPropertyBase, axis_lock));
+            br_print!("{:x}", size_of::<FNumericBrickPropertyBase>());
+        }
+    }
 }
-unsafe extern "C" fn SameType( prop: *mut FProperty, other: *mut FProperty) -> bool
-{
-    (*prop).field.class_private == (*other).field.class_private
-}
+*/
 
 unsafe fn ue_object_init( _params: *mut FStaticConstructObjectParameters, obj: *mut UObjectBase )
 {
-    //br_print!("{}", (*obj).name_private);
-
-    if (*obj).IsA_str("Brick")
+    if (*obj).IsA_str("MyPropertiesBrick_C")
     {
         let brick = obj as *mut UBrick;
-        let cls = (*brick).uobject.class_private as *mut UClass;
-        br_print!("{}",(*cls).ustruct.ufield.uobject.name_private);
-        let offsets = CUSTOMDATA_OFFSETS.as_mut().unwrap();
-        let offset = *offsets.entry(cls).or_insert(uclass_reserve_memory2::<CustomData>(cls));
-        let data = (brick as *mut u8).add(offset) as *mut CustomData;
-        (*data).val = 10.0;
-
-        /*
-         * we do not rely on direct usage as we will get memory problems due to reallocations
-         * */
-        *data = zeroed();
-
-        br_print!("Brick: {:p}, Data {:p}, Offset: {}", brick, data, data as i64 - brick as i64);
-        (*data).property.vtbl = fmalloc::calloc2::<FPropertyVTable>(1);
-        (*(*data).property.vtbl).SerializeItem = transmute(FLOAT_PROPERTY_SERIALIZE_ITEM.unwrap());
-        (*(*data).property.vtbl).SameType = SameType;
-        (*data).property.element_size = 4;
-        (*data).property.array_dim = 1;
-        (*data).property.offset_internal = offset as u32;
-
-        let n: FName = NAME_NONE;
-        let mut prop: FNumericBrickPropertyBase = zeroed();
-        prop.property.vtable = FNumericBrickPropertyBase_ptr as *mut FBrickPropertyVTable;
-        prop.property.name = n;
-        prop.property.property = &mut (*data).property;
-        prop.value_type.value.value = ENumericValueType::Float;
-        (*data).brickproperty = prop;
-
-        let mut name = FString::from_str("My property\0");
-        (*data).edit_info.name = FText::from_fstring(&name);
-        name.free();
-
-        let mut name = FString::from_str("My property pretty description banana\0");
-        (*data).edit_info.description = FText::from_fstring(&name);
-        name.free();
-
-        (*data).edit_info.is_enabled = true;
-        //(*data).edit_info.list_items = 1;
-
         (*brick).property_interface.vtable = copy_vtable_estimate_size_with_parent((*brick).property_interface.vtable as *mut _).0 as *mut _;
         let vtbl_iface = (*brick).property_interface.vtable as *mut IBrickPropertyInterfaceVTable;
         (*vtbl_iface).ReflectBrickProperties = custom_reflect_properties;
     }
+    /*
+    if (*obj).IsA_str("ScalableBrick")
+    {
+        let brick = obj as *mut UBrick;
+        (*brick).property_interface.vtable = copy_vtable_estimate_size_with_parent((*brick).property_interface.vtable as *mut _).0 as *mut _;
+        let vtbl_iface = (*brick).property_interface.vtable as *mut IBrickPropertyInterfaceVTable;
+        (*vtbl_iface).ReflectBrickProperties = custom_reflect_properties2;
+    }
+    */
 }
 
 pub fn frame()

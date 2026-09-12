@@ -39,11 +39,11 @@ ifdef DIR
 PLUGIN_DIR = $(DIR)/BrickRigs/Plugins/BrickRust
 
 xinput: 
-	cd xinput_proxy && cargo build $(CARGO_TARGET) -r --target x86_64-pc-windows-gnu
+	cargo build --package xinput1_3 -r --target x86_64-pc-windows-gnu
 
 install: xinput build
-	cp "$(TARGET)/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
-	cp "$(TARGET)/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
+	cp "$(TARGET_RELEASE)/xinput1_3.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
+	cp "$(TARGET)/deps/brickworks.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	cp "$(MINGW)/libgcc_s_seh-1.dll" "$(DIR)" 
 	cp "$(MINGW)/libwinpthread-1.dll" "$(DIR)" 
 	mkdir -p "$(DIR)/brickworks"
@@ -57,6 +57,7 @@ install_brmk: build_brmk
 	cp "$(MINGW)/libgcc_s_seh-1.dll" "$(DIR)/BrickRigs/Binaries/Win64"
 	cp "$(MINGW)/libwinpthread-1.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	mkdir -p "$(DIR)/BrickRigs/Binaries/Win64/brickworks"
+
 
 
 else

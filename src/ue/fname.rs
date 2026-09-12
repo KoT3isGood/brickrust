@@ -133,6 +133,11 @@ impl FName
     #[cfg(not(feature = "brmk"))]
     const NAME_ENTRY_HEADER_SIZE: usize = 2;
     const NAME_ENTRY_STRIDE: usize = align_of::<FNameEntry>();
+
+    pub  fn is_none(&self) -> bool
+    {
+        self.comparison_index == 0
+    }
     pub unsafe fn equals_str(&self, str: &'static str) -> bool
     {
         let (ptr, len) = self.as_sptr();

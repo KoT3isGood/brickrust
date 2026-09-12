@@ -128,9 +128,16 @@ pub unsafe fn autobacktrace()
 #[no_mangle]
 pub unsafe fn init()
 {
+
     static mut INITED: bool = false;
     if INITED { return; }
     INITED = true;
+
+    use std::panic;
+    panic::set_hook(Box::new(|info| {
+        br_print!("Panic: {}", info);
+        autobacktrace();
+    }));
     init_signatures();
     blueprint::init();
 }

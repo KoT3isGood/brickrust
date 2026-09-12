@@ -10,8 +10,6 @@ use brickworks::modinfo;
 use crate::universal::get_logger;
 set_module_name!(b"brickworks\0");
 
-use std::backtrace::Backtrace;
-use std::panic;
 
 use brickworks::br_print;
 use super::hookmgr;
@@ -29,11 +27,6 @@ unsafe extern "system"
 #[no_mangle]
 pub unsafe extern "C" fn brickworks_init() {
 
-    panic::set_hook(Box::new(|info| {
-        let bt = Backtrace::force_capture();
-        br_print!("Panic: {}", info);
-        br_print!("Backtrace:\n{}", bt);
-    }));
     get_logger();
 
     hookmgr::init();
@@ -45,6 +38,7 @@ pub unsafe extern "C" fn brickworks_init() {
      * print this thing
      * */
     br_print!("Working directory: {}", std::env::current_dir().unwrap().display());
+    br_print!("Mods {:#?}", MODS);
     for m in MODS.as_mut().unwrap().iter()
     {
         use modinfo::ModInfo;

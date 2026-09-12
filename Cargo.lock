@@ -46,6 +46,7 @@ dependencies = [
  "bitflags",
  "brickrust_macros",
  "brickworks",
+ "brickworks_impl",
  "inventory",
  "min_hook_rs",
  "wchar",

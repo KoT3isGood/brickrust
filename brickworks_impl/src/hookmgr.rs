@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::vec::Vec;
 
+use brickworks::{br_print, set_module_name};
+
 unsafe extern "C"
 {
     fn brickworks_hook_internal( _f: *const (), _new_fn: *const() ) -> *const ();

@@ -1,5 +1,6 @@
 
 use crate::ue::tarray::TArray;
+use crate::ue::toptional::TOptional;
 use crate::ue::tshared::*;
 use crate::ue::ftext::FText;
 use crate::br::properties::property::FBrickPropertyInstance;
@@ -26,16 +27,17 @@ pub struct FBrickPropertyEditInfo
     pub instance: FBrickPropertyInstance,
     pub this: TWeakPtr<FBrickPropertyEditInfo>,
     pub name: FText,
-    pub idk6: *mut (),
-    pub idk7: *mut (),
+    pub _a01: usize,
+    pub _a02: *mut (),
+    pub _a03: FText,
     pub description: FText,
-    pub idk9: TSharedPtr<()>,
-    pub idk10: *mut (),
-    pub container_objects: TArray<()>,
-    pub _a02: FWeakObjectPtr,
+    pub container_objects: TArray<FWeakObjectPtr>,
+    pub _a05: FWeakObjectPtr,
     pub is_enabled: bool,
     pub is_read_only: bool,
     pub color_style: EBrickUIBrushStyle,
-    pub idk15: *mut (),
+    pub max_combo_box_list_items: i32,
+    pub max_combo_box_items_per_row: i32,
     pub pending_changed_event: TSharedPtr<()>,
+    pub orientation_override: TOptional<u8>,
 }

@@ -401,7 +401,6 @@ impl UObject
             cls = (*cls).ustruct.super_struct as *const UClass;
             if cls.is_null() { break; }
         }
-        br_print!("{}", name);
 
         name == s
     }
@@ -409,14 +408,12 @@ impl UObject
     {
         let name = self.name_private; 
         let s = FString::from_fname(name);
-        br_print!("+  {}", s);
         let mut cls = self.outer_private;
         loop 
         {
             if cls.is_null() { break; }
 
             let s = FString::from_fname((*cls).name_private);
-            br_print!("{}", s);
             cls = (*cls).outer_private;
         }
         false
@@ -457,6 +454,7 @@ impl UObject
     pub unsafe fn IsA_str(&self, s: &'static str) -> bool
     {
         let fname = FName::search_str(s);
+        if fname.is_none() { return false }
         self.IsA_FName(fname)
     }
     pub unsafe fn IsOuterA(&self, s: &'static str) -> bool

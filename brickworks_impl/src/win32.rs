@@ -43,6 +43,10 @@ unsafe extern "system" fn DllMain(
 {
     match reason {
         DLL_PROCESS_ATTACH => {
+            static mut INITED: bool = false;
+            if INITED { return 1; }
+            INITED = true;
+
             let module = GetModuleHandleA(core::ptr::null());
             let process = GetCurrentProcess();
             let mut modinfo: MODULEINFO = zeroed();

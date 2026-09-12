@@ -32,6 +32,13 @@ pub unsafe fn calloc2<T>( count: usize ) -> *mut T
 {
     (Malloc.unwrap())( count * size_of::<T>(), DEFAULT_ALIGNMENT) as *mut T
 }
+pub unsafe fn calloc_from_object<T>( obj: &T ) -> *mut T
+{
+    let mem = (Malloc.unwrap())( size_of::<T>(), DEFAULT_ALIGNMENT) as *mut T;
+    core::ptr::copy_nonoverlapping(obj, mem, 1);
+    mem
+    
+}
 
 pub unsafe fn realloc( original: *mut(), count: usize ) -> *mut ()
 {

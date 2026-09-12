@@ -3,6 +3,7 @@ use brickworks::br_print;
 use brickworks::set_module_name;
 
 use crate::ue::fname::FName;
+use crate::ue::fname::NAME_NONE;
 
 use super::fproperty::*;
 use super::tarray::*;
@@ -126,6 +127,36 @@ impl UStruct
             br_print!("{}", (*cls).ufield.uobject.name_private);
             cls = (*cls).super_struct;
         }
+    }
+
+    pub unsafe fn GetProperty_fname(&self, name: FName) -> *const FProperty
+    {
+        let mut prop = self.property_link;
+        while !prop.is_null()
+        {
+            if (*prop).field.name_private.comparison_index == name.comparison_index { return prop }
+            prop = (*prop).property_link_next;
+        }
+
+        core::ptr::null_mut()
+    }
+    pub unsafe fn GetProperty_str(&self, name: &'static str) -> *const FProperty
+    {
+        let name = FName::search_str(name);
+        if name.comparison_index == 0 { 
+            return core::ptr::null() 
+        }
+        return self.GetProperty_fname(name);
+    }
+    pub unsafe fn dump_properties(&self) -> *const FProperty
+    {
+        let mut prop = self.property_link;
+        while !prop.is_null()
+        {
+            br_print!("prop {}", (*prop).field.name_private);
+            prop = (*prop).property_link_next;
+        }
+        core::ptr::null_mut()
     }
 }
 

@@ -77,7 +77,6 @@ unsafe extern "C" fn static_construct( params: *mut FStaticConstructObjectParame
 }
 unsafe extern "C" fn engine_init(a: *mut (), b: *mut ())
 {
-    br_print!("hello\n");
     (UEngine_Init_hook.unwrap())(a, b);
 
     let subhooks = brickworks_get_posthooks(
@@ -193,7 +192,6 @@ pub(crate) unsafe fn init_signatures()
             )
         )
     );
-    /*
     ProcessInternal_hook = Some(
         transmute(
             brickworks_create_hook(
@@ -202,15 +200,14 @@ pub(crate) unsafe fn init_signatures()
             )
         )
     );
-    */
-    /*UEngine_Init_hook = Some(
+    UEngine_Init_hook = Some(
         transmute(
             brickworks_create_hook(
                 UEngine_Init_ptr.unwrap() as *const _, 
                 engine_init as *const _
             )
         )
-    );*/
+    );
 
     #[cfg(not(feature = "brmk"))]
     {
