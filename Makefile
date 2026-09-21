@@ -1,12 +1,13 @@
 .PHONY: help install build run
 
 help:
-	@echo "run"
-	@echo "    make install DIR=\"/path/to/common/Brick Rigs\""
+	@echo "make install DIR=\"/path/to/common/Brick Rigs\" # installs for standalone version"
+	@echo "make install_brmk DIR=\"/path/to/BRMK/BrickRigs\" # installs for BRMK"
 	@echo ""
 	@echo "for example \"$(HOME)/.steam/steam/steamapps/common/Brick Rigs\""
+	@echo ""
 	@echo "dev=true			enables development builds"
-	@echo "MINGW=			mingw libraries directory"
+	@echo "MINGW=...		mingw libraries directory"
 
 TARGET_RELEASE=target/x86_64-pc-windows-gnu/release
 TARGET_DEV=target/x86_64-pc-windows-gnu/debug
@@ -57,8 +58,6 @@ install_brmk: build_brmk
 	cp "$(MINGW)/libgcc_s_seh-1.dll" "$(DIR)/BrickRigs/Binaries/Win64"
 	cp "$(MINGW)/libwinpthread-1.dll" "$(DIR)/BrickRigs/Binaries/Win64" 
 	mkdir -p "$(DIR)/BrickRigs/Binaries/Win64/brickworks"
-
-
 
 else
 install:

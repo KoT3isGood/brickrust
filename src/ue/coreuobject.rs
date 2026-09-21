@@ -8,6 +8,7 @@ use brickworks::patterns::*;
 set_module_name!(b"coreuobject\0");
 
 use crate::ue::fframe::FFrame;
+use crate::ue::fproperty::FProperty;
 use crate::ue::fstring::FString;
 
 use super::fname::*;
@@ -502,6 +503,10 @@ impl UObject
             br_print!("outer  {}", (*cls).name_private);
             cls = (*cls).outer_private;
         }
+    }
+    pub unsafe fn GetProperty_str<T>(&mut self, name: &'static str) -> *const FProperty
+    {
+        (*self.class_private).ustruct.GetProperty_str(name)
     }
 
 }

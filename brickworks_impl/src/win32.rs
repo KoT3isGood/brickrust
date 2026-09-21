@@ -122,6 +122,18 @@ unsafe extern "C" fn brickworks_hook_internal( old_fn: *const (), new_fn: *const
     core::mem::transmute(f)
 }
 
+#[no_mangle]
+unsafe extern "C" fn brickworks_get_base_address() -> *const ()
+{
+    return get_base_address() as *const _;
+}
+
+#[no_mangle]
+unsafe extern "C" fn brickworks_get_base_size() -> usize
+{
+    return get_base_size();
+}
+
 unsafe extern "C"
 {
     fn fopen( path: *const u8, mode: *const u8 ) -> *mut ();
