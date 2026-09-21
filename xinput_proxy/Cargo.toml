@@ -2,6 +2,7 @@
 name = "xinput1_3"
 edition = "2021"
 version = "0.0.2"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]

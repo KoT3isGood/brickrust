@@ -100,13 +100,13 @@ unsafe extern "C" fn brickworks_binary_lookup( offset: isize, mode: LookupMode, 
 #[no_mangle]
 unsafe extern "C" fn brickworks_binary_dll_lookup( _dll: *const u8, _offset: isize, _mode: LookupMode, _sign: CSignature ) -> *const u8
 {
-    unreachable!("brickworks_binary_dll_lookup is not implemented for WIN64")
+    unreachable!("brickworks_binary_dll_lookup is not implemented for windows")
 }
 
 #[no_mangle]
 unsafe extern "C" fn brickworks_cpp_lookup( _cpp: *const u8 ) -> *const u8
 {
-    unreachable!("brickworks_cpp_lookup is not implemented for WIN64")
+    unreachable!("brickworks_cpp_lookup is not implemented for windows")
 }
 
 #[no_mangle]
