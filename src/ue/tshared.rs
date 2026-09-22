@@ -1,6 +1,40 @@
 #![allow(nonstandard_style)]
 
+use core::marker::PhantomData;
+
 use crate::ue::{coreuobject::GObjects, fmalloc};
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct FWeakObjectPtr {
+    pub object_index: i32,
+    pub object_serial_number: i32,
+}
+
+impl FWeakObjectPtr
+{
+    pub unsafe fn unwrap<T>(&self) -> *mut T
+    {
+        (*GObjects().array.Get(self.object_index)).object as *mut T
+    }
+}
+
+/// A weak object pointer (TWeakObjectPtr<T>).
+/// Privately inherits from FWeakObjectPtr, so the layout is identical.
+///
+/// TWeakObjectPtr is a weak reference to a UObject that will automatically
+/// become null when the referenced object is garbage collected. Useful for
+/// storing references to objects that may outlive the current scope without
+/// preventing garbage collection.
+///
+/// Can be used as a UProperty and will be automatically updated when the
+/// referenced object changes.
+#[repr(C)]
+pub struct TWeakObjectPtr<T>
+{
+    pub inner: FWeakObjectPtr,
+    _phantom: PhantomData<T>,
+}
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -62,20 +96,6 @@ pub struct TSharedPtr<T> {
 pub struct TWeakPtr<T> {
     pub object: *mut T,
     pub reference_controller: *mut FReferenceControllerBase,
-}
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct FWeakObjectPtr {
-    pub object_index: i32,
-    pub object_serial_number: i32,
-}
-
-impl FWeakObjectPtr
-{
-    pub unsafe fn unwrap<T>(&self) -> *mut T
-    {
-        (*GObjects().array.Get(self.object_index)).object as *mut T
-    }
 }
 
 #[repr(C)]

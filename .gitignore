@@ -1,5 +1,7 @@
 **/target
 **/.fpc
 **/.cache
+**/__pycache__
 deps/minhook/minhook/build
 loaders/ue4ss/build
+
