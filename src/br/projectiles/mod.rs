@@ -27,3 +27,15 @@ impl EAmmoType
         }
     }
 }
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct FProjectileParams
+{
+    pub InitialSpeed: f32,
+    pub MaxDamage: f32,
+    pub MinDamage: f32,
+    pub DropoffStart: f32,
+    pub DropoffEnd: f32,
+    pub MaxRange: f32,
+}

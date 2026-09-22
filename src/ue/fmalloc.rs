@@ -1,3 +1,6 @@
+//! A wrapper around FMemory.
+//! The name is misleading.
+
 #![allow(non_upper_case_globals)]
 
 use brickworks::{br_print, patterns::*};
@@ -23,15 +26,20 @@ lookup! {
     pub const Free: unsafe extern "C" fn ( original: *mut() ) -> bool =
         LookupInfo::ProcMangled("?Free@FMemory@@SAXPEAX@Z");
 }
+
+// Allocates memory block of count bytes
 pub unsafe fn malloc( count: usize ) -> *mut ()
 {
     (Malloc.unwrap())(count, DEFAULT_ALIGNMENT)
 }
 
+// Allocates memory block of count elements.
 pub unsafe fn calloc2<T>( count: usize ) -> *mut T
 {
     (Malloc.unwrap())( count * size_of::<T>(), DEFAULT_ALIGNMENT) as *mut T
 }
+
+// Clones an object to UE heap
 pub unsafe fn calloc_from_object<T>( obj: &T ) -> *mut T
 {
     let mem = (Malloc.unwrap())( size_of::<T>(), DEFAULT_ALIGNMENT) as *mut T;

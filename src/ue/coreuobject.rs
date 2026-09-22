@@ -375,6 +375,7 @@ impl UObject
     {
         let class = self.class_private;
         let f = (*class).FindFunctionByName(name, true);
+        if f.is_null() { return };
         let vtable = &*(self.vtable as *mut UObjectVTable);
         (vtable.ProcessEvent)(self, f, params as *mut _);
 

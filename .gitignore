@@ -2,6 +2,7 @@
 **/.fpc
 **/.cache
 **/__pycache__
+.qwen/
 deps/minhook/minhook/build
 loaders/ue4ss/build
 

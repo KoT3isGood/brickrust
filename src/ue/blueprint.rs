@@ -2,6 +2,7 @@
 use brickworks::{br_print, set_module_name};
 use super::coreuobject::*;
 use super::FFrame;
+pub use inventory;
 set_module_name!(b"blueprints\0");
 
 pub struct BlueprintFunction
@@ -33,7 +34,6 @@ macro_rules! bp_function {
         use $crate::ue::fframe::*;
         use $crate::ue::coreuobject::*;
         use $crate::ue::blueprint::*;
-        use inventory::*;
 
         #[allow(non_snake_case)]
         unsafe fn $name($obj: *mut UObject, $stack: &mut FFrame, $result: *mut ()) $body
@@ -50,7 +50,6 @@ macro_rules! bp_function {
         use $crate::ue::fframe::*;
         use $crate::ue::coreuobject::*;
         use $crate::ue::blueprint::*;
-        use inventory::*;
 
         #[allow(non_snake_case)]
         unsafe fn exec($obj: *mut UObject, $stack: &mut FFrame, $result: *mut ()) $body

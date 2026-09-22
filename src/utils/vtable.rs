@@ -113,4 +113,3 @@ pub unsafe fn class_get_parent_vtable( class: *mut *mut *mut () ) -> *mut usize
 {
     *(*class).sub(1) as *mut usize
 }
-

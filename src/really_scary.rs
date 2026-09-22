@@ -1,5 +1,7 @@
 //! This module provides scary functions that allow to commit actual war crimes in code, such as
 //! making the UClass allocation size larger for putting own variables.
+//!
+//! It is recommended to use Blueprint-Generated properties instead when possible
 use crate::ue::uclass::*;
 
 pub unsafe fn uclass_reserve_memory( cls: *mut UClass, bytes: usize, _alignment: usize ) -> usize

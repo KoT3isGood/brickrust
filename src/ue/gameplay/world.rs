@@ -1,8 +1,8 @@
 #![allow(nonstandard_style)]
 
-use crate::ue::coreuobject::EObjectFlags;
+use crate::ue::coreuobject::{EObjectFlags, UObject};
 use crate::ue::fname::{FName, NAME_NONE};
-use crate::ue::uclass::UClass;
+use crate::ue::uclass::{UClass};
 use crate::ue::fmath::*;
 
 use super::actor::AActor;
@@ -11,6 +11,7 @@ use brickworks::patterns::*;
 #[repr(C)]
 pub struct UWorld
 {
+    pub uobject: UObject
 
 }
 

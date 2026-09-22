@@ -1,5 +1,6 @@
 use std::mem::zeroed;
 
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct TOptional<T: Clone>
@@ -13,7 +14,6 @@ impl<T: Clone> TOptional<T>
     pub const fn none() -> TOptional<T>
     {
         return TOptional { value: unsafe { zeroed() }, is_set: false }
-
     }
     pub fn some(data: T) -> TOptional<T>
     {

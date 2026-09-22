@@ -18,7 +18,6 @@ pub mod tmap;
 pub mod farchive;
 pub mod tshared;
 pub mod uclass;
-pub mod utils;
 pub mod blueprint;
 pub mod gameplay;
 pub mod gcobject;
